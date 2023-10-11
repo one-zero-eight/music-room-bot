@@ -7,7 +7,7 @@ from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import find_dotenv, load_dotenv
 
-from routers import router
+from handlers.registration import router
 
 load_dotenv(find_dotenv())
 
