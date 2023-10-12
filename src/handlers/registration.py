@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
-from keyboards.main_menu import kb, register
+from src.keyboards import registration, MyCallbackData, menu, phone_request_kb
 
 router = Router()
 
@@ -13,13 +13,18 @@ router = Router()
 class Registration(StatesGroup):
     enter_email = State()
     enter_code = State()
+    request_phone_number = State()
+    handle_phone_number = State()
     enter_name_and_necessary_cred = State()
-    enter_phone_number = State()
 
 
-@router.message(F.text == "register")
-async def start_registration(msg: Message, state: FSMContext):
-    await msg.answer("Введите почту, на нее придет одноразовый код для регистрации/авторизации.")
+@router.callback_query(MyCallbackData.filter(F.some_key == "register"))
+async def callback(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()  # удаляет значок загрузки у кнопки (часики)
+    await callback_query.bot.send_message(
+        chat_id=callback_query.from_user.id,
+        text="Введите почту, на нее придет одноразовый код для регистрации/авторизации.",
+    )
     await state.set_state(Registration.enter_email)
 
 
@@ -34,7 +39,7 @@ async def enter_email(message: Message, state: FSMContext):
                 await message.answer(text="Пользователь с указанной почтой уже зарегистрирован.")
             else:
                 await state.update_data(email=message.text)
-                await message.answer(text="Спасибо. Теперь введите полученный код")
+                await message.answer(text="Введите полученный код")
                 await state.set_state(Registration.enter_code)
 
 
@@ -52,14 +57,22 @@ async def entered_code(message: Message, state: FSMContext):
                     text="Ваш код принят. Чтобы пользоваться муз. комнатой, вам предстоит заполнить профиль."
                 )
                 await message.answer(text="Введите ваше имя")
-                await state.set_state(Registration.enter_name_and_necessary_cred)
+                await state.set_state(Registration.request_phone_number)
 
             else:
                 await message.answer(text="Код неверный")
 
 
-@router.message(Registration.enter_phone_number)
-async def entered_phone_number(message: Message, state: FSMContext):
+@router.message(Registration.request_phone_number)
+async def request_phone_number(message: Message, state: FSMContext):
+    await message.answer(text="Пожалуйста, предоставьте доступ к своему телефону", reply_markup=phone_request_kb)
+    await state.set_state(Registration.handle_phone_number)
+
+
+@router.message(Registration.request_phone_number, F.contact)
+async def handle_phone_number(message: Message, state: FSMContext):
+    phone_number = message.contact.phone_number
+    await state.update_data(phone_number=phone_number)
     await state.set_state(Registration.enter_name_and_necessary_cred)
 
 
@@ -88,13 +101,13 @@ async def start(message: types.Message):
     res = await is_user_exists(telegram_id)
     if res:
         keyboard = types.ReplyKeyboardMarkup(
-            keyboard=kb, resize_keyboard=True, input_field_placeholder="Выберите действие"
+            keyboard=menu, resize_keyboard=True, input_field_placeholder="Выберите действие"
         )
         await message.answer("Добро пожаловать! Выберете интересующее вас действие.", reply_markup=keyboard)
     else:
-        keyboard1 = types.InlineKeyboardMarkup(inline_keyboard=register)
         await message.answer(
-            "Добро пожаловать! Чтобы продолжить, вам необходимо зарегистрироваться.", reply_markup=keyboard1)
+            "Добро пожаловать! Чтобы продолжить, вам необходимо зарегистрироваться.", reply_markup=registration
+        )
 
 
 async def is_user_exists(telegram_id: str) -> bool:
