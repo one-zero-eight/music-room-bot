@@ -1,13 +1,16 @@
 from aiogram import types
 from aiogram.filters.callback_data import CallbackData
 
-menu = [
-    [
-        types.KeyboardButton(text="Создать бронь"),
-        types.KeyboardButton(text="Посмотреть картинку с бронями"),
-        types.KeyboardButton(text="Открыть личный кабинет"),
+menu = types.ReplyKeyboardMarkup(
+    resize_keyboard=True,
+    keyboard=[
+        [
+            types.KeyboardButton(text="Создать бронь"),
+            types.KeyboardButton(text="Посмотреть картинку с бронями"),
+            types.KeyboardButton(text="Открыть личный кабинет"),
+        ]
     ],
-]
+)
 
 
 class MyCallbackData(CallbackData, prefix="some_prefix"):
@@ -26,9 +29,6 @@ registration = types.InlineKeyboardMarkup(
 
 phone_request_kb = types.ReplyKeyboardMarkup(
     resize_keyboard=True,
-    keyboard=[
-        [
-            types.KeyboardButton(text="Share My Phone Number", request_contact=True, id="contact")
-        ]
-    ]
+    one_time_keyboard=True,
+    keyboard=[[types.KeyboardButton(text="Share My Phone Number", request_contact=True)]],
 )

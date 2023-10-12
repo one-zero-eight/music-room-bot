@@ -1,3 +1,5 @@
+import asyncio
+
 import aiohttp
 from aiogram import F, Router, types
 from aiogram.filters import Command
@@ -5,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
-from src.keyboards import registration, MyCallbackData, menu, phone_request_kb
+from src.keyboards import MyCallbackData, menu, phone_request_kb, registration
 
 router = Router()
 
@@ -14,8 +16,7 @@ class Registration(StatesGroup):
     enter_email = State()
     enter_code = State()
     request_phone_number = State()
-    handle_phone_number = State()
-    enter_name_and_necessary_cred = State()
+    enter_name_and_necessary_credentials = State()
 
 
 @router.callback_query(MyCallbackData.filter(F.some_key == "register"))
@@ -48,7 +49,7 @@ async def entered_code(message: Message, state: FSMContext):
     user_data = await state.get_data()
     email = user_data.get("email")
     url = "http://127.0.0.1:8000/auth/validate_code"
-    params = {"email": email, "code": message.text}
+    params = {"email": email, "code": message.text, "telegram_id": str(message.from_user.id)}
     async with aiohttp.ClientSession() as session:
         async with session.post(url, params=params) as response:
             await response.text()
@@ -56,42 +57,41 @@ async def entered_code(message: Message, state: FSMContext):
                 await message.answer(
                     text="Ваш код принят. Чтобы пользоваться муз. комнатой, вам предстоит заполнить профиль."
                 )
-                await message.answer(text="Введите ваше имя")
+                await asyncio.sleep(0.5)
+                await message.answer(
+                    text="Пожалуйста, предоставьте доступ к своему телефону", reply_markup=phone_request_kb
+                )
                 await state.set_state(Registration.request_phone_number)
 
             else:
                 await message.answer(text="Код неверный")
 
 
-@router.message(Registration.request_phone_number)
-async def request_phone_number(message: Message, state: FSMContext):
-    await message.answer(text="Пожалуйста, предоставьте доступ к своему телефону", reply_markup=phone_request_kb)
-    await state.set_state(Registration.handle_phone_number)
-
-
 @router.message(Registration.request_phone_number, F.contact)
-async def handle_phone_number(message: Message, state: FSMContext):
+async def request_phone_number(message: Message, state: FSMContext):
     phone_number = message.contact.phone_number
     await state.update_data(phone_number=phone_number)
-    await state.set_state(Registration.enter_name_and_necessary_cred)
+    await message.answer("Введите ваше имя")
+    await state.set_state(Registration.enter_name_and_necessary_credentials)
 
 
-@router.message(Registration.enter_name_and_necessary_cred)
+@router.message(Registration.enter_name_and_necessary_credentials)
 async def enter_name_and_necessary_credentials(message: Message, state: FSMContext):
     user_data = await state.get_data()
     params = {
-        "email": user_data.get("email"),
-        "name": message.text,
-        "telegram_id": str(message.from_user.id),
+        "name": str(message.text),
+        "email": str(user_data.get("email")),
         "alias": str(message.from_user.username),
-        "phone_number": user_data.get("phone_number"),
+        "phone_number": str(user_data.get("phone_number")),
     }
     url = "http://127.0.0.1:8000/participants/fill_profile"
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, params=params) as response:
+        async with session.post(url, json=params) as response:
             await response.text()
-
-    await message.answer(text="Нам потребуется получить ваш номер телефона. Он будет зашифрован.")
+            if response.status == 200:
+                await message.answer("Вы успешно зарегистрировались.", reply_markup=menu)
+            else:
+                await message.answer("Возникла ошибка при регистрации")
     await state.clear()
 
 
@@ -111,7 +111,7 @@ async def start(message: types.Message):
 
 
 async def is_user_exists(telegram_id: str) -> bool:
-    url = f"http://127.0.0.1:8000/participants/is_user_exists"
+    url = f"http://127.0.0.1:8000/auth/is_user_exists"
     params = {"telegram_id": telegram_id}
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params) as response:
