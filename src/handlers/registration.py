@@ -12,6 +12,18 @@ from src.keyboards import MyCallbackData, menu, phone_request_kb, registration
 router = Router()
 
 
+@router.message(Command("start"))
+async def start(message: types.Message):
+    telegram_id = str(message.from_user.id)
+    res = await is_user_exists(telegram_id)
+    if res:
+        await message.answer("Добро пожаловать! Выберете интересующее вас действие.", reply_markup=menu)
+    else:
+        await message.answer(
+            "Добро пожаловать! Чтобы продолжить, вам необходимо зарегистрироваться.", reply_markup=registration
+        )
+
+
 class Registration(StatesGroup):
     enter_email = State()
     enter_code = State()
@@ -93,18 +105,6 @@ async def enter_name_and_necessary_credentials(message: Message, state: FSMConte
             else:
                 await message.answer("Возникла ошибка при регистрации")
     await state.clear()
-
-
-@router.message(Command("start"))
-async def start(message: types.Message):
-    telegram_id = str(message.from_user.id)
-    res = await is_user_exists(telegram_id)
-    if res:
-        await message.answer("Добро пожаловать! Выберете интересующее вас действие.", reply_markup=menu)
-    else:
-        await message.answer(
-            "Добро пожаловать! Чтобы продолжить, вам необходимо зарегистрироваться.", reply_markup=registration
-        )
 
 
 async def is_user_exists(telegram_id: str) -> bool:
