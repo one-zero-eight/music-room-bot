@@ -100,10 +100,7 @@ async def start(message: types.Message):
     telegram_id = str(message.from_user.id)
     res = await is_user_exists(telegram_id)
     if res:
-        keyboard = types.ReplyKeyboardMarkup(
-            keyboard=menu, resize_keyboard=True, input_field_placeholder="Выберите действие"
-        )
-        await message.answer("Добро пожаловать! Выберете интересующее вас действие.", reply_markup=keyboard)
+        await message.answer("Добро пожаловать! Выберете интересующее вас действие.", reply_markup=menu)
     else:
         await message.answer(
             "Добро пожаловать! Чтобы продолжить, вам необходимо зарегистрироваться.", reply_markup=registration
