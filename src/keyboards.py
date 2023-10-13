@@ -19,11 +19,7 @@ class MyCallbackData(CallbackData, prefix="some_prefix"):
 
 registration = types.InlineKeyboardMarkup(
     inline_keyboard=[
-        [
-            types.InlineKeyboardButton(
-                text="Register", callback_data=MyCallbackData(some_key="register").pack()
-            )
-        ]
+        [types.InlineKeyboardButton(text="Register", callback_data=MyCallbackData(some_key="register").pack())]
     ]
 )
 

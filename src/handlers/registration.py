@@ -23,24 +23,24 @@ async def start(message: types.Message):
 
 
 class Registration(StatesGroup):
-    enter_email = State()
-    enter_code = State()
-    request_phone_number = State()
-    enter_name_and_necessary_credentials = State()
+    email_requested = State()
+    code_requested = State()
+    phone_number_requested = State()
+    name_requested = State()
 
 
 @router.callback_query(MyCallbackData.filter(F.some_key == "register"))
-async def callback(callback_query: types.CallbackQuery, state: FSMContext):
+async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()  # Removes the loading icon from the button (hourglass)
     await callback_query.bot.send_message(
         chat_id=callback_query.from_user.id,
         text="Enter your email. You will receive a one-time code for registration/authentication.",
     )
-    await state.set_state(Registration.enter_email)
+    await state.set_state(Registration.email_requested)
 
 
-@router.message(Registration.enter_email)
-async def enter_email(message: Message, state: FSMContext):
+@router.message(Registration.email_requested)
+async def request_email(message: Message, state: FSMContext):
     async with aiohttp.ClientSession() as session:
         url = "http://127.0.0.1:8000/auth/registration"
         params = {"email": message.text}
@@ -51,11 +51,11 @@ async def enter_email(message: Message, state: FSMContext):
             else:
                 await state.update_data(email=message.text)
                 await message.answer(text="Enter the received code")
-                await state.set_state(Registration.enter_code)
+                await state.set_state(Registration.code_requested)
 
 
-@router.message(Registration.enter_code)
-async def enter_code(message: types.Message, state: FSMContext):
+@router.message(Registration.code_requested)
+async def request_code(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
     email = user_data.get("email")
     telegram_id = str(message.from_user.id)
@@ -74,21 +74,21 @@ async def enter_code(message: types.Message, state: FSMContext):
                     text="Please provide access to your phone",
                     reply_markup=phone_request_kb,
                 )
-                await state.set_state(Registration.request_phone_number)
+                await state.set_state(Registration.phone_number_requested)
             else:
                 await message.answer("Incorrect code")
 
 
-@router.message(Registration.request_phone_number, F.contact)
+@router.message(Registration.phone_number_requested, F.contact)
 async def request_phone_number(message: Message, state: FSMContext):
     phone_number = message.contact.phone_number
     await state.update_data(phone_number=phone_number)
     await message.answer("Enter your name")
-    await state.set_state(Registration.enter_name_and_necessary_credentials)
+    await state.set_state(Registration.name_requested)
 
 
-@router.message(Registration.enter_name_and_necessary_credentials)
-async def enter_name_and_necessary_credentials(message: Message, state: FSMContext):
+@router.message(Registration.name_requested)
+async def request_name(message: Message, state: FSMContext):
     user_data = await state.get_data()
     params = {
         "name": str(message.text),
