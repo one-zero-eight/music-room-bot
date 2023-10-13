@@ -69,21 +69,22 @@ async def request_code(message: types.Message, state: FSMContext):
                 await message.answer(
                     text="Your code has been accepted. To use the music room, you need to fill out your profile."
                 )
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.8)
                 await message.answer(
                     text="Please provide access to your phone",
                     reply_markup=phone_request_kb,
                 )
                 await state.set_state(Registration.phone_number_requested)
-            else:
-                await message.answer("Incorrect code")
+            elif response.status == 400:
+                await message.answer(text="Incorrect code. Please, enter the code again.")
+                return
 
 
 @router.message(Registration.phone_number_requested, F.contact)
 async def request_phone_number(message: Message, state: FSMContext):
     phone_number = message.contact.phone_number
     await state.update_data(phone_number=phone_number)
-    await message.answer("Enter your name")
+    await message.answer("Please, enter your name.")
     await state.set_state(Registration.name_requested)
 
 
