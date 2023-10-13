@@ -17,11 +17,9 @@ async def start(message: types.Message):
     telegram_id = str(message.from_user.id)
     res = await is_user_exists(telegram_id)
     if res:
-        await message.answer("Добро пожаловать! Выберете интересующее вас действие.", reply_markup=menu)
+        await message.answer("Welcome! Choose the action you're interested in.", reply_markup=menu)
     else:
-        await message.answer(
-            "Добро пожаловать! Чтобы продолжить, вам необходимо зарегистрироваться.", reply_markup=registration
-        )
+        await message.answer("Welcome! To continue, you need to register.", reply_markup=registration)
 
 
 class Registration(StatesGroup):
@@ -33,10 +31,10 @@ class Registration(StatesGroup):
 
 @router.callback_query(MyCallbackData.filter(F.some_key == "register"))
 async def callback(callback_query: types.CallbackQuery, state: FSMContext):
-    await callback_query.answer()  # удаляет значок загрузки у кнопки (часики)
+    await callback_query.answer()  # Removes the loading icon from the button (hourglass)
     await callback_query.bot.send_message(
         chat_id=callback_query.from_user.id,
-        text="Введите почту, на нее придет одноразовый код для регистрации/авторизации.",
+        text="Enter your email. You will receive a one-time code for registration/authentication.",
     )
     await state.set_state(Registration.enter_email)
 
@@ -49,41 +47,43 @@ async def enter_email(message: Message, state: FSMContext):
         async with session.post(url, params=params) as response:
             await response.text()
             if response.status == 400:
-                await message.answer(text="Пользователь с указанной почтой уже зарегистрирован.")
+                await message.answer(text="A user with the provided email is already registered.")
             else:
                 await state.update_data(email=message.text)
-                await message.answer(text="Введите полученный код")
+                await message.answer(text="Enter the received code")
                 await state.set_state(Registration.enter_code)
 
 
 @router.message(Registration.enter_code)
-async def entered_code(message: Message, state: FSMContext):
+async def enter_code(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
     email = user_data.get("email")
+    telegram_id = str(message.from_user.id)
+
     url = "http://127.0.0.1:8000/auth/validate_code"
-    params = {"email": email, "code": message.text, "telegram_id": str(message.from_user.id)}
+    params = {"email": email, "code": message.text, "telegram_id": telegram_id}
     async with aiohttp.ClientSession() as session:
         async with session.post(url, params=params) as response:
             await response.text()
             if response.status == 200:
                 await message.answer(
-                    text="Ваш код принят. Чтобы пользоваться муз. комнатой, вам предстоит заполнить профиль."
+                    text="Your code has been accepted. To use the music room, you need to fill out your profile."
                 )
                 await asyncio.sleep(0.5)
                 await message.answer(
-                    text="Пожалуйста, предоставьте доступ к своему телефону", reply_markup=phone_request_kb
+                    text="Please provide access to your phone",
+                    reply_markup=phone_request_kb,
                 )
                 await state.set_state(Registration.request_phone_number)
-
             else:
-                await message.answer(text="Код неверный")
+                await message.answer("Incorrect code")
 
 
 @router.message(Registration.request_phone_number, F.contact)
 async def request_phone_number(message: Message, state: FSMContext):
     phone_number = message.contact.phone_number
     await state.update_data(phone_number=phone_number)
-    await message.answer("Введите ваше имя")
+    await message.answer("Enter your name")
     await state.set_state(Registration.enter_name_and_necessary_credentials)
 
 
@@ -101,9 +101,9 @@ async def enter_name_and_necessary_credentials(message: Message, state: FSMConte
         async with session.post(url, json=params) as response:
             await response.text()
             if response.status == 200:
-                await message.answer("Вы успешно зарегистрировались.", reply_markup=menu)
+                await message.answer("You have successfully registered.", reply_markup=menu)
             else:
-                await message.answer("Возникла ошибка при регистрации")
+                await message.answer("There was an error during registration.")
     await state.clear()
 
 

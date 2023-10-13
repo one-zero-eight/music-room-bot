@@ -5,9 +5,9 @@ menu = types.ReplyKeyboardMarkup(
     resize_keyboard=True,
     keyboard=[
         [
-            types.KeyboardButton(text="Создать бронь"),
-            types.KeyboardButton(text="Посмотреть картинку с бронями"),
-            types.KeyboardButton(text="Открыть личный кабинет"),
+            types.KeyboardButton(text="Create a boooking"),
+            types.KeyboardButton(text="Show the image with bookings"),
+            types.KeyboardButton(text="Open profile"),
         ]
     ],
 )
@@ -21,7 +21,7 @@ registration = types.InlineKeyboardMarkup(
     inline_keyboard=[
         [
             types.InlineKeyboardButton(
-                text="Зарегистрироваться", callback_data=MyCallbackData(some_key="register").pack()
+                text="Register", callback_data=MyCallbackData(some_key="register").pack()
             )
         ]
     ]
@@ -30,5 +30,5 @@ registration = types.InlineKeyboardMarkup(
 phone_request_kb = types.ReplyKeyboardMarkup(
     resize_keyboard=True,
     one_time_keyboard=True,
-    keyboard=[[types.KeyboardButton(text="Share My Phone Number", request_contact=True)]],
+    keyboard=[[types.KeyboardButton(text="Share my phone number", request_contact=True)]],
 )
