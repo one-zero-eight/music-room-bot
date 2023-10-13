@@ -28,13 +28,12 @@ phone_request_kb = types.ReplyKeyboardMarkup(
     one_time_keyboard=True,
     keyboard=[[types.KeyboardButton(text="Share my phone number", request_contact=True)]],
 )
-#
-#
-# yes_or_no = types.InlineKeyboardMarkup(
-#     inline_keyboard=[
-#         [
-#             types.InlineKeyboardButton(text="Yes", callback_data=MyCallbackData(some_key="yes").pack()),
-#             types.InlineKeyboardButton(text="No", callback_data=MyCallbackData(some_key1="no").pack())
-#         ]
-#     ]
-# )
+
+image_schedule_kb = types.InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            types.InlineKeyboardButton(text="Current", callback_data=MyCallbackData(some_key="current").pack()),
+            types.InlineKeyboardButton(text="Next", callback_data=MyCallbackData(some_key="next").pack()),
+        ]
+    ]
+)
