@@ -33,11 +33,19 @@ class Registration(StatesGroup):
 @router.callback_query(MyCallbackData.filter(F.key == "register"))
 async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()  # Removes the loading icon from the button (hourglass)
-    await callback_query.bot.send_message(
-        chat_id=callback_query.from_user.id,
-        text="Enter your email. You will receive a one-time code for registration/authentication.",
-    )
-    await state.set_state(Registration.email_requested)
+    telegram_id = str(callback_query.from_user.id)
+    if not await is_user_exists(telegram_id):
+        await callback_query.bot.send_message(
+            chat_id=callback_query.from_user.id,
+            text="Enter your email. You will receive a one-time code for registration/authentication.",
+        )
+        await state.set_state(Registration.email_requested)
+    else:
+        await callback_query.bot.send_message(
+            chat_id=callback_query.from_user.id,
+            text="You`re already registered.",
+            reply_markup=menu
+        )
 
 
 @router.message(Registration.email_requested)
