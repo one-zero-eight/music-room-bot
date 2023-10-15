@@ -13,7 +13,7 @@ menu = types.ReplyKeyboardMarkup(
 )
 
 
-class MyCallbackData(CallbackData, prefix="some_prefix"):
+class RegistrationCallbackData(CallbackData, prefix="registration"):
     key: str
 
 
@@ -23,8 +23,7 @@ class ImageScheduleCallbackData(CallbackData, prefix="schedule"):
 
 registration = types.InlineKeyboardMarkup(
     inline_keyboard=[
-        [
-            types.InlineKeyboardButton(text="Register", callback_data=MyCallbackData(key="register").pack())]
+        [types.InlineKeyboardButton(text="Register", callback_data=RegistrationCallbackData(key="register").pack())]
     ]
 )
 
@@ -37,9 +36,9 @@ phone_request_kb = types.ReplyKeyboardMarkup(
 confirm_email_kb = types.InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            types.InlineKeyboardButton(text="Yes", callback_data=MyCallbackData(key="correct_email").pack()),
+            types.InlineKeyboardButton(text="Yes", callback_data=RegistrationCallbackData(key="correct_email").pack()),
             types.InlineKeyboardButton(
-                text="Change email", callback_data=MyCallbackData(key="change_email").pack()
+                text="Change email", callback_data=RegistrationCallbackData(key="change_email").pack()
             ),
         ]
     ]

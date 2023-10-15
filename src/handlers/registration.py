@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
-from src.keyboards import (MyCallbackData, confirm_email_kb, menu,
+from src.keyboards import (RegistrationCallbackData, confirm_email_kb, menu,
                            phone_request_kb, registration)
 
 router = Router()
@@ -30,7 +30,7 @@ class Registration(StatesGroup):
     name_requested = State()
 
 
-@router.callback_query(MyCallbackData.filter(F.key == "register"))
+@router.callback_query(RegistrationCallbackData.filter(F.key == "register"))
 async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()  # Removes the loading icon from the button (hourglass)
     telegram_id = str(callback_query.from_user.id)
@@ -42,9 +42,7 @@ async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMC
         await state.set_state(Registration.email_requested)
     else:
         await callback_query.bot.send_message(
-            chat_id=callback_query.from_user.id,
-            text="You`re already registered.",
-            reply_markup=menu
+            chat_id=callback_query.from_user.id, text="You`re already registered.", reply_markup=menu
         )
 
 
@@ -54,7 +52,7 @@ async def request_email(message: Message, state: FSMContext):
     await message.answer(text=f"You entered {message.text}. Is it correct email?", reply_markup=confirm_email_kb)
 
 
-@router.callback_query(MyCallbackData.filter(F.key == "correct_email"))
+@router.callback_query(RegistrationCallbackData.filter(F.key == "correct_email"))
 async def send_code(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()  # Removes the loading icon from the button (hourglass)
     async with (aiohttp.ClientSession() as session):
