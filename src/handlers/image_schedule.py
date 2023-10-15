@@ -4,7 +4,7 @@ import aiohttp
 from aiogram import F, Router, types
 from aiogram.types import BufferedInputFile
 
-from src.keyboards import MyCallbackData, image_schedule_kb
+from src.keyboards import ImageScheduleCallbackData, image_schedule_kb
 
 router = Router()
 
@@ -16,11 +16,11 @@ async def get_image_schedule(message: types.Message):
     )
 
 
-@router.callback_query(MyCallbackData.filter(F.some_key))
+@router.callback_query(ImageScheduleCallbackData.filter(F.key))
 async def get_image_schedule_for_current_week(callback_query: types.CallbackQuery):
     await callback_query.answer()
-    choice = callback_query.data[12:]
-    if choice == "current":
+    choice = callback_query.data
+    if choice == "schedule:current_week":
         await callback_query.bot.send_message(
             text="Sending image for the current week...", chat_id=callback_query.from_user.id
         )

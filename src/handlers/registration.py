@@ -7,7 +7,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
-from src.keyboards import MyCallbackData, menu, phone_request_kb, registration
+from src.keyboards import (MyCallbackData, confirm_email_kb, menu,
+                           phone_request_kb, registration)
 
 router = Router()
 
@@ -29,7 +30,7 @@ class Registration(StatesGroup):
     name_requested = State()
 
 
-@router.callback_query(MyCallbackData.filter(F.some_key == "register"))
+@router.callback_query(MyCallbackData.filter(F.key == "register"))
 async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()  # Removes the loading icon from the button (hourglass)
     await callback_query.bot.send_message(
@@ -41,16 +42,26 @@ async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMC
 
 @router.message(Registration.email_requested)
 async def request_email(message: Message, state: FSMContext):
-    async with aiohttp.ClientSession() as session:
+    await state.update_data(email=message.text)
+    await message.answer(text=f"You entered {message.text}. Is it correct email?", reply_markup=confirm_email_kb)
+
+
+@router.callback_query(MyCallbackData.filter(F.key == "correct_email"))
+async def send_code(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.answer()  # Removes the loading icon from the button (hourglass)
+    async with (aiohttp.ClientSession() as session):
         url = "http://127.0.0.1:8000/auth/registration"
-        params = {"email": message.text}
+        user_data = await state.get_data()
+        email = user_data.get("email")
+        chat_id = callback_query.message.chat.id
+        params = {"email": email}
         async with session.post(url, params=params) as response:
-            await response.text()
+            from src.main import bot
+
             if response.status == 400:
-                await message.answer(text="A user with the provided email is already registered.")
+                await bot.send_message(chat_id=chat_id, text="A user with the provided email is already registered.")
             else:
-                await state.update_data(email=message.text)
-                await message.answer(text="Enter the received code")
+                await bot.send_message(chat_id=chat_id, text="Enter the received code")
                 await state.set_state(Registration.code_requested)
 
 
