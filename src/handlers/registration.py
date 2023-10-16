@@ -7,8 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
-from src.keyboards import (RegistrationCallbackData, confirm_email_kb, menu,
-                           phone_request_kb, registration)
+from src.keyboards import RegistrationCallbackData, confirm_email_kb, menu, phone_request_kb, registration
 
 router = Router()
 
@@ -32,7 +31,7 @@ class Registration(StatesGroup):
 
 @router.callback_query(RegistrationCallbackData.filter(F.key == "register"))
 async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMContext):
-    await callback_query.answer()  # Removes the loading icon from the button (hourglass)
+    await callback_query.answer()
     telegram_id = str(callback_query.from_user.id)
     if not await is_user_exists(telegram_id):
         await callback_query.bot.send_message(
@@ -54,7 +53,7 @@ async def request_email(message: Message, state: FSMContext):
 
 @router.callback_query(RegistrationCallbackData.filter(F.key == "correct_email"))
 async def send_code(callback_query: types.CallbackQuery, state: FSMContext):
-    await callback_query.answer()  # Removes the loading icon from the button (hourglass)
+    await callback_query.answer()
     async with (aiohttp.ClientSession() as session):
         url = "http://127.0.0.1:8000/auth/registration"
         user_data = await state.get_data()
@@ -122,7 +121,6 @@ async def request_name(message: Message, state: FSMContext):
                 await message.answer("You have successfully registered.", reply_markup=menu)
             else:
                 await message.answer("There was an error during registration.")
-    await state.clear()
 
 
 async def is_user_exists(telegram_id: str) -> bool:
