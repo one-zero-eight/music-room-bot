@@ -1,11 +1,11 @@
-from datetime import date
+from datetime import date, datetime, timedelta, time
 
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.filters.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
-from aiogram_dialog.widgets.kbd import Button, Calendar
+from aiogram_dialog.widgets.kbd import Button, Calendar, Group
 from aiogram_dialog.widgets.text import Const
 
 router = Router()
@@ -22,6 +22,12 @@ async def on_date_selected(callback: CallbackQuery, widget, manager: DialogManag
     await manager.next()
 
 
+async def on_start_time_selected(callback: CallbackQuery, widget, manager: DialogManager):
+    print(callback.message)
+    await callback.answer(f"Selected start time: ")
+    await manager.next()
+
+
 @router.message(F.text == "Create a booking")
 async def get_image_schedule(message: Message, dialog_manager: DialogManager):
     # Important: always set `mode=StartMode.RESET_STACK` you don't want to stack dialogs
@@ -31,29 +37,41 @@ async def get_image_schedule(message: Message, dialog_manager: DialogManager):
 date_selection = Window(
     Const("Please select a date:"),
     Calendar(id="calendar", on_click=on_date_selected),
-
     state=CreateBookingProcedure.choose_date,
 )
 
-time_options = [
-    "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM",
-    "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM",
-    "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM",
-    "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM"
-]
+start_time = time(7, 0)
+end_time = time(22, 0)
 
-# Create an empty list to store the button widgets
-time_button_ids = [f"time_{time_option.replace(':', '').replace(' ', '_')}" for time_option in time_options]
+# Create a list to store the button widgets
+time_buttons = []
 
-# Create a list of button widgets with valid IDs
-time_buttons = [Button(Const(time_option), id=button_id) for time_option, button_id in
-                zip(time_options, time_button_ids)]
-time_selection = Window(
-    Const("Please select a time:"),
+# Generate buttons with 30-minute intervals
+current_time = start_time
+while current_time <= end_time:
+    # Convert the current time to a string for button label in 24-hour format
+    time_option = current_time.strftime("%H:%M")
+
+    # Generate a valid button ID
+    button_id = f"time_{time_option.replace(':', '').replace(' ', '_')}"
+
+    # Create the button and add it to the list
+    time_buttons.append(Button(Const(time_option), id=button_id, on_click=on_start_time_selected))
+
+    # Increment the current time by 30 minutes
+    current_time = (datetime.combine(datetime.today(), current_time) + timedelta(minutes=30)).time()
+
+group = Group(
     *time_buttons,
-    state=CreateBookingProcedure.choose_start_time,
+    width=4,
 )
 
-dialog = Dialog(date_selection, time_selection)
+start_time_selection = Window(
+    Const("Please select a start time:"),
+    group,
+    state=CreateBookingProcedure.choose_start_time
+)
+
+dialog = Dialog(date_selection, start_time_selection)
 
 router.include_router(dialog)
