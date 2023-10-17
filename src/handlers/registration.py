@@ -7,7 +7,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
-from src.keyboards import RegistrationCallbackData, confirm_email_kb, menu, phone_request_kb, registration
+from src.keyboards import (RegistrationCallbackData, confirm_email_kb, menu,
+                           phone_request_kb, registration)
 
 router = Router()
 
@@ -52,13 +53,13 @@ async def request_email(message: Message, state: FSMContext):
 
 
 @router.callback_query(RegistrationCallbackData.filter(F.key == "correct_email"))
-async def send_code(callback_query: types.CallbackQuery, state: FSMContext):
-    await callback_query.answer()
+async def send_code(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
     async with (aiohttp.ClientSession() as session):
         url = "http://127.0.0.1:8000/auth/registration"
         user_data = await state.get_data()
         email = user_data.get("email")
-        chat_id = callback_query.message.chat.id
+        chat_id = callback.message.chat.id
         params = {"email": email}
         async with session.post(url, params=params) as response:
             from src.main import bot
