@@ -5,7 +5,7 @@ from aiogram import F, Router
 from aiogram.filters.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
-from aiogram_dialog.widgets.kbd import Button, Calendar, Group, Back
+from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Group
 from aiogram_dialog.widgets.text import Const
 
 from src.handlers.registration import is_user_exists
@@ -30,23 +30,28 @@ async def on_start_time_selected(callback: CallbackQuery, button: Button, manage
     await manager.next()
 
 
-async def get_user_id(telegram_id: str) -> str:
-    ...
+async def get_user_id(telegram_id: int) -> str:
+    url = "http://127.0.0.1:8000/participants/participant_id"
+    params = {"telegram_id": telegram_id}
+    async with (aiohttp.ClientSession() as session):
+        async with session.get(url, params=params) as response:
+            if response.status == 200:
+                res = await response.text()
+                return res
 
 
 async def on_end_time_selected(callback: CallbackQuery, button: Button, manager: DialogManager):
     # TODO Получить user_id на основе telegram_id
-    telegram_id = str(callback.message.from_user.id)
+    telegram_id = callback.from_user.id
     user_id = await get_user_id(telegram_id)
-    date = manager.dialog_data.get("selected_date")
-    date = str(date).split("-")
+    date = str(manager.dialog_data.get("selected_date")).split("-")
     date = list(map(int, date))
     start_time = manager.dialog_data.get("selected_start_time")
     end_time = callback.data
     time_start = datetime(*date, int(start_time[:2]), int(start_time[2:]))
     time_end = datetime(*date, int(end_time[:2]), int(end_time[2:]))
     params = {
-        "participant_id": str(1),
+        "participant_id": user_id,
         "time_start": str(time_start),
         "time_end": str(time_end),
     }
@@ -59,10 +64,6 @@ async def on_end_time_selected(callback: CallbackQuery, button: Button, manager:
                 await callback.message.answer("Error in creating booking.")
 
     await manager.done()
-
-
-async def back(callback: CallbackQuery, button: Button, manager: DialogManager):
-    await manager.back()
 
 
 @router.message(F.text == "Create a booking")

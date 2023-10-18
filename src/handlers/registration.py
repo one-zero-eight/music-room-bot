@@ -7,7 +7,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
-from src.keyboards import RegistrationCallbackData, confirm_email_kb, menu, phone_request_kb, registration
+from src.keyboards import (RegistrationCallbackData, confirm_email_kb, menu,
+                           phone_request_kb, registration)
 
 router = Router()
 
