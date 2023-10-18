@@ -120,6 +120,7 @@ async def request_name(message: Message, state: FSMContext):
             await response.text()
             if response.status == 200:
                 await message.answer("You have successfully registered.", reply_markup=menu)
+                await state.clear()
             else:
                 await message.answer("There was an error during registration.")
 
