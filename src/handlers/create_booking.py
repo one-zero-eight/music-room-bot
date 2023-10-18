@@ -2,14 +2,13 @@ from datetime import date, datetime, time, timedelta
 
 import aiohttp
 from aiogram import F, Router
-from aiogram.filters import Command
 from aiogram.filters.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
-from aiogram_dialog.widgets.kbd import Button, Calendar, Group
+from aiogram_dialog.widgets.kbd import Button, Calendar, Group, Back
 from aiogram_dialog.widgets.text import Const
 
-from src.handlers.registration import is_user_exists, start
+from src.handlers.registration import is_user_exists
 from src.keyboards import registration
 
 router = Router()
@@ -60,6 +59,10 @@ async def on_end_time_selected(callback: CallbackQuery, button: Button, manager:
                 await callback.message.answer("Error in creating booking.")
 
     await manager.done()
+
+
+async def back(callback: CallbackQuery, button: Button, manager: DialogManager):
+    await manager.back()
 
 
 @router.message(F.text == "Create a booking")
@@ -137,11 +140,17 @@ end_time_group = Group(
 )
 
 start_time_selection = Window(
-    Const("Please select start time:"), start_time_group, state=CreateBookingProcedure.choose_start_time
+    Const("Please select start time:"),
+    start_time_group,
+    Back(),
+    state=CreateBookingProcedure.choose_start_time,
 )
 
 end_time_selection = Window(
-    Const("Please select end time:"), end_time_group, state=CreateBookingProcedure.choose_end_time
+    Const("Please select end time:"),
+    end_time_group,
+    Back(),
+    state=CreateBookingProcedure.choose_end_time,
 )
 
 dialog = Dialog(date_selection, start_time_selection, end_time_selection)
