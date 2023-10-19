@@ -1,6 +1,5 @@
 import json
 from datetime import date, datetime, time, timedelta
-from typing import Tuple
 
 import aiohttp
 from aiogram import F, Router
@@ -53,7 +52,7 @@ async def run_process_booking_creation(user_id: str, time_start: str, time_end: 
         url = "http://127.0.0.1:8000/bookings/create_booking"
         async with session.post(url, json=params) as response:
             response_text = await response.text()
-            response_json = json.loads(response_text)  # Parse JSON string to dictionary
+            response_json = json.loads(response_text)
             return response, response_json
 
 
@@ -69,10 +68,10 @@ async def on_end_time_selected(callback: CallbackQuery, button: Button, manager:
     response, response_text = await run_process_booking_creation(user_id, time_start, time_end)
     if response.status == 200:
         await callback.message.answer(f"You have successfully booked on {date}: {start_time}-{callback.data}")
+        await manager.done()
     else:
         await callback.message.answer(f"Error occurred: {response_text.get('detail')}")
-
-    await manager.done()
+        await manager.switch_to(CreateBookingProcedure.choose_date)
 
 
 @router.message(F.text == "Create a booking")
