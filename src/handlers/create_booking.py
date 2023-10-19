@@ -1,4 +1,6 @@
+import json
 from datetime import date, datetime, time, timedelta
+from typing import Tuple
 
 import aiohttp
 from aiogram import F, Router
@@ -7,6 +9,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Group
 from aiogram_dialog.widgets.text import Const
+from aiohttp import ClientResponse
 
 from src.handlers.registration import is_user_exists
 from src.keyboards import registration
@@ -40,28 +43,34 @@ async def get_user_id(telegram_id: int) -> str:
                 return res
 
 
+async def run_process_booking_creation(user_id: str, time_start: str, time_end: str) -> tuple[ClientResponse, json]:
+    params = {
+        "participant_id": user_id,
+        "time_start": time_start,
+        "time_end": time_end,
+    }
+    async with (aiohttp.ClientSession() as session):
+        url = "http://127.0.0.1:8000/bookings/create_booking"
+        async with session.post(url, json=params) as response:
+            response_text = await response.text()
+            response_json = json.loads(response_text)  # Parse JSON string to dictionary
+            return response, response_json
+
+
 async def on_end_time_selected(callback: CallbackQuery, button: Button, manager: DialogManager):
-    # TODO Получить user_id на основе telegram_id
     telegram_id = callback.from_user.id
     user_id = await get_user_id(telegram_id)
     date = str(manager.dialog_data.get("selected_date")).split("-")
     date = list(map(int, date))
     start_time = manager.dialog_data.get("selected_start_time")
     end_time = callback.data
-    time_start = datetime(*date, int(start_time[:2]), int(start_time[2:]))
-    time_end = datetime(*date, int(end_time[:2]), int(end_time[2:]))
-    params = {
-        "participant_id": user_id,
-        "time_start": str(time_start),
-        "time_end": str(time_end),
-    }
-    async with (aiohttp.ClientSession() as session):
-        url = "http://127.0.0.1:8000/bookings/create_booking"
-        async with session.post(url, json=params) as response:
-            if response.status == 200:
-                await callback.message.answer(f"You have successfully booked on {date}: {start_time}-{callback.data}")
-            else:
-                await callback.message.answer("Error in creating booking.")
+    time_start = str(datetime(*date, int(start_time[:2]), int(start_time[2:])))
+    time_end = str(datetime(*date, int(end_time[:2]), int(end_time[2:])))
+    response, response_text = await run_process_booking_creation(user_id, time_start, time_end)
+    if response.status == 200:
+        await callback.message.answer(f"You have successfully booked on {date}: {start_time}-{callback.data}")
+    else:
+        await callback.message.answer(f"Error occurred: {response_text.get('detail')}")
 
     await manager.done()
 
