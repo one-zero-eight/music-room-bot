@@ -35,7 +35,7 @@ async def on_start_time_selected(callback: CallbackQuery, button: Button, manage
 async def get_user_id(telegram_id: int) -> str:
     url = "http://127.0.0.1:8000/participants/participant_id"
     params = {"telegram_id": telegram_id}
-    async with (aiohttp.ClientSession() as session):
+    async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params) as response:
             if response.status == 200:
                 res = await response.text()

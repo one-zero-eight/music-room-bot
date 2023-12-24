@@ -71,7 +71,7 @@ async def send_code(callback: types.CallbackQuery, state: FSMContext):
             if response.status == 400:
                 await callback.message.answer("A user with the provided email is already registered.")
             else:
-                await callback.message.answer("We sent a one-time code on your email. Please, enter it")
+                await callback.message.answer("We sent a one-time code on your email. Please, enter it.")
                 await state.set_state(Registration.code_requested)
 
 

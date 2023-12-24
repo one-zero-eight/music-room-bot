@@ -22,10 +22,10 @@ async def get_image_schedule_for_current_week(callback: types.CallbackQuery):
     choice = callback.data
     chat_id = callback.from_user.id
     if choice == "schedule:current_week":
-        await callback.bot.send_message(text="Sending image for the current week...", chat_id=chat_id)
+        await callback.message.answer("Sending image for the current week...")
         photo = await get_image_schedule_from_api(True)
     else:
-        await callback.bot.send_message(text="Sending image for the next week...", chat_id=chat_id)
+        await callback.message.answer("Sending image for the next week...")
         photo = await get_image_schedule_from_api(False)
     await callback.bot.send_photo(chat_id=chat_id, photo=photo)
 
