@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import date, datetime, time, timedelta
 
@@ -48,7 +49,7 @@ async def run_process_booking_creation(user_id: str, time_start: str, time_end: 
         "time_start": time_start,
         "time_end": time_end,
     }
-    async with (aiohttp.ClientSession() as session):
+    async with aiohttp.ClientSession() as session:
         url = "http://127.0.0.1:8000/bookings/create_booking"
         async with session.post(url, json=params) as response:
             response_text = await response.text()
@@ -74,59 +75,113 @@ async def on_end_time_selected(callback: CallbackQuery, button: Button, manager:
         await manager.switch_to(CreateBookingProcedure.choose_date)
 
 
+async def setup_available_slots():
+    global start_time_group, end_time_group
+    start_time_group = Group(
+        *await start_time_button_generator(),
+        width=4,
+    )
+
+    end_time_group = Group(
+        *await end_time_button_generator(),
+        width=4,
+    )
+
+
 @router.message(F.text == "Create a booking")
 async def get_image_schedule(message: Message, dialog_manager: DialogManager):
     if not await is_user_exists(str(message.from_user.id)):
         await message.answer("Welcome! To continue, you need to register.", reply_markup=registration)
     else:
-        # Important: always set `mode=StartMode.RESET_STACK` you don't want to stack dialogs
         await dialog_manager.start(CreateBookingProcedure.choose_date, mode=StartMode.RESET_STACK)
+        await setup_available_slots()
 
 
-def start_time_button_generator() -> list[Button]:
+async def get_daily_bookings():
+    async with aiohttp.ClientSession() as session:
+        url = "http://127.0.0.1:8000/bookings/daily_bookings"
+        params = {"day": datetime.now().isoformat()}
+        async with session.get(url, params=params) as response:
+            response_text = await response.text()
+            response_json = json.loads(response_text)
+            return response, response_json
+
+
+async def start_time_button_generator() -> list[Button]:
+    available_slots = await get_available_start_slots("test")
+
     start_time = time(7, 0)
-    end_time = time(22, 0)
 
-    # Create a list to store the button widgets
     time_buttons = []
 
-    # Generate buttons with 30-minute intervals
     current_time = start_time
-    while current_time <= end_time:
-        # Convert the current time to a string for button label in 24-hour format
-        time_option = current_time.strftime("%H:%M")
+    for slot in available_slots:
+        button_id = f"{slot.replace(':', '').replace(' ', '_')}"
 
-        # Generate a valid button ID
-        button_id = f"{time_option.replace(':', '').replace(' ', '_')}"
+        time_buttons.append(Button(Const(slot), id=button_id, on_click=on_start_time_selected))
 
-        # Create the button and add it to the list
-        time_buttons.append(Button(Const(time_option), id=button_id, on_click=on_start_time_selected))
-
-        # Increment the current time by 30 minutes
         current_time = (datetime.combine(datetime.today(), current_time) + timedelta(minutes=30)).time()
 
     return time_buttons
 
 
-def end_time_button_generator(status: str) -> list[Button]:
+async def get_available_end_slots(mode: str):
+    response, response_text = await get_daily_bookings()
+
+    booking_intervals = []
+
+    for item in response_text:
+        start_time = datetime.fromisoformat(item['time_start'])
+        end_time = datetime.fromisoformat(item['time_end'])
+
+        formatted_item = [start_time.strftime('%H:%M'), end_time.strftime('%H:%M')]
+        booking_intervals.append(formatted_item)
+
+    # Generate all time slots from 07:00 to 22:00
+    all_time_slots = [f'{hour:02d}:{minute:02d}' for hour in range(7, 23) for minute in (0, 30)]
+
+    # Remove booked intervals and intervals that start or end at booked times from available time slots
+    available_time_slots = [slot for slot in all_time_slots if
+                            not any(start <= slot < end or start <= slot <= end for start, end in booking_intervals)]
+
+    return available_time_slots
+
+
+async def get_available_start_slots(mode: str):
+    response, response_text = await get_daily_bookings()
+
+    booking_intervals = []
+
+    for item in response_text:
+        start_time = datetime.fromisoformat(item['time_start'])
+        end_time = datetime.fromisoformat(item['time_end'])
+
+        formatted_item = [start_time.strftime('%H:%M'), end_time.strftime('%H:%M')]
+
+        booking_intervals.append(formatted_item)
+
+    # Generate all time slots from 07:00 to 22:00
+    all_time_slots = [f'{hour:02d}:{minute:02d}' for hour in range(7, 23) for minute in (0, 30)]
+
+    # Remove booked intervals and intervals that start at booked times from available time slots
+    available_time_slots = [slot for slot in all_time_slots if
+                            not any(start <= slot < end for start, end in booking_intervals)]
+
+    return available_time_slots
+
+
+async def end_time_button_generator() -> list[Button]:
+    available_slots = await get_available_end_slots("test")
+
     start_time = time(7, 0)
-    end_time = time(22, 0)
-    # Create a list to store the button widgets
     time_buttons = []
 
-    # Generate buttons with 30-minute intervals
     current_time = start_time
-    while current_time <= end_time:
-        # Convert the current time to a string for button label in 24-hour format
-        time_option = current_time.strftime("%H:%M")
+    for slot in available_slots:
+        button_id = f"{slot.replace(':', '').replace(' ', '_')}"
 
-        # Generate a valid button ID
-        button_id = f"{time_option.replace(':', '').replace(' ', '_')}"
+        time_buttons.append(Button(Const(slot), id=button_id, on_click=on_end_time_selected))
 
-        # Create the button and add it to the list
-        time_buttons.append(Button(Const(time_option), id=button_id, on_click=on_end_time_selected))
-
-        # Increment the current time by 30 minutes
         current_time = (datetime.combine(datetime.today(), current_time) + timedelta(minutes=30)).time()
 
     return time_buttons
@@ -139,12 +194,12 @@ date_selection = Window(
 )
 
 start_time_group = Group(
-    *start_time_button_generator(),
+    *asyncio.run(start_time_button_generator()),
     width=4,
 )
 
 end_time_group = Group(
-    *end_time_button_generator("free"),
+    *asyncio.run(end_time_button_generator()),
     width=4,
 )
 
