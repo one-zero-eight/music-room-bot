@@ -13,6 +13,13 @@ from src.keyboards import (RegistrationCallbackData, confirm_email_kb, menu,
 router = Router()
 
 
+class Registration(StatesGroup):
+    email_requested = State()
+    code_requested = State()
+    phone_number_requested = State()
+    name_requested = State()
+
+
 @router.message(Command("start"))
 async def start(message: types.Message):
     telegram_id = str(message.from_user.id)
@@ -23,13 +30,6 @@ async def start(message: types.Message):
         await message.answer("Welcome! To continue, you need to register.", reply_markup=registration)
 
 
-class Registration(StatesGroup):
-    email_requested = State()
-    code_requested = State()
-    phone_number_requested = State()
-    name_requested = State()
-
-
 @router.callback_query(RegistrationCallbackData.filter(F.key == "register"))
 async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
@@ -37,7 +37,7 @@ async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMC
     if not await is_user_exists(telegram_id):
         await callback_query.bot.send_message(
             chat_id=callback_query.from_user.id,
-            text="Enter your email. You will receive a one-time code for registration/authentication.",
+            text="Enter your email. You will receive a one-time code for registration.",
         )
         await state.set_state(Registration.email_requested)
     else:
@@ -52,22 +52,26 @@ async def request_email(message: Message, state: FSMContext):
     await message.answer(text=f"You entered {message.text}. Is it correct email?", reply_markup=confirm_email_kb)
 
 
+@router.callback_query(RegistrationCallbackData.filter(F.key == "change_email"))
+async def change_email(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer("Please enter your email again.")
+    await state.set_state(Registration.email_requested)
+
+
 @router.callback_query(RegistrationCallbackData.filter(F.key == "correct_email"))
 async def send_code(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
-    async with (aiohttp.ClientSession() as session):
+    async with aiohttp.ClientSession() as session:
         url = "http://127.0.0.1:8000/auth/registration"
         user_data = await state.get_data()
         email = user_data.get("email")
-        chat_id = callback.message.chat.id
         params = {"email": email}
         async with session.post(url, params=params) as response:
-            from src.main import bot
-
             if response.status == 400:
-                await bot.send_message(chat_id=chat_id, text="A user with the provided email is already registered.")
+                await callback.message.answer("A user with the provided email is already registered.")
             else:
-                await bot.send_message(chat_id=chat_id, text="Enter the received code")
+                await callback.message.answer("We sent a one-time code on your email. Please, enter it")
                 await state.set_state(Registration.code_requested)
 
 
@@ -88,7 +92,7 @@ async def request_code(message: types.Message, state: FSMContext):
                 )
                 await asyncio.sleep(0.8)
                 await message.answer(
-                    text="Please provide access to your phone",
+                    text="Please provide access to your phone.",
                     reply_markup=phone_request_kb,
                 )
                 await state.set_state(Registration.phone_number_requested)
