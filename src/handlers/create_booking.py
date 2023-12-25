@@ -50,7 +50,7 @@ async def run_process_booking_creation(user_id: str, time_start: str, time_end: 
         "time_end": time_end,
     }
     async with aiohttp.ClientSession() as session:
-        url = "http://127.0.0.1:8000/bookings/create_booking"
+        url = "http://127.0.0.1:8000/bookings/"
         async with session.post(url, json=params) as response:
             response_text = await response.text()
             response_json = json.loads(response_text)
@@ -64,8 +64,8 @@ async def on_end_time_selected(callback: CallbackQuery, button: Button, manager:
     date = list(map(int, date))
     start_time = manager.dialog_data.get("selected_start_time")
     end_time = callback.data
-    time_start = str(datetime(*date, int(start_time[:2]), int(start_time[2:])))
-    time_end = str(datetime(*date, int(end_time[:2]), int(end_time[2:])))
+    time_start = (str(datetime(*date, int(start_time[:2]), int(start_time[2:])))).replace(" ", "T")
+    time_end = (str(datetime(*date, int(end_time[:2]), int(end_time[2:])))).replace(" ", "T")
     response, response_text = await run_process_booking_creation(user_id, time_start, time_end)
     if response.status == 200:
         await callback.message.answer(f"You have successfully booked on {date}: {start_time}-{callback.data}")
