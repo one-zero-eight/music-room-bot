@@ -130,7 +130,7 @@ async def request_name(message: Message, state: FSMContext):
 
 
 async def is_user_exists(telegram_id: str) -> bool:
-    url = f"http://127.0.0.1:8000/auth/is_user_exists"
+    url = "http://127.0.0.1:8000/auth/is_user_exists"
     params = {"telegram_id": telegram_id}
     async with aiohttp.ClientSession() as session:
         async with session.get(url, params=params) as response:
