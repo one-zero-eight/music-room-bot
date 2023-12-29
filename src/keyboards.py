@@ -7,7 +7,7 @@ menu = types.ReplyKeyboardMarkup(
         [
             types.KeyboardButton(text="Create a booking"),
             types.KeyboardButton(text="Show the image with bookings"),
-            types.KeyboardButton(text="Open profile"),
+            types.KeyboardButton(text="My bookings"),
         ]
     ],
 )
