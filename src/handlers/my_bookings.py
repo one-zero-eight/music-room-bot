@@ -14,27 +14,25 @@ async def _create_inline_keyboard(bookings: list[dict]):
 
     for booking in bookings:
         button1_text = f"{booking['time_start']} - {booking['time_end'][-5:]}"
-        button2_text = 'Delete'
+        button2_text = 'Cancel'
 
         button1 = types.InlineKeyboardButton(text=button1_text, callback_data='plug')
-        button2 = types.InlineKeyboardButton(text=button2_text, callback_data=f'delete_{booking["id"]}')
+        button2 = types.InlineKeyboardButton(text=button2_text, callback_data=f'cancel_{booking["id"]}')
 
         keyboard += [[button1, button2]]
 
     return types.InlineKeyboardMarkup(inline_keyboard=keyboard, row_width=2)
 
 
-@router.callback_query(lambda c: c.data.startswith('delete'))
+@router.callback_query(lambda c: c.data.startswith('cancel'))
 async def handle_delete_callback(callback_query: types.CallbackQuery):
     booking_id = int(callback_query.data.split('_')[1])
 
     response = await client.delete_booking(booking_id)
     if response:
-        await callback_query.answer(text="You have successfully delete the booking", show_alert=True)
-        await show_my_bookings()
+        await callback_query.answer(text="You have successfully cancel the booking", show_alert=True)
     else:
         await callback_query.answer(text="No such booking found", show_alert=True)
-        return False
 
 
 @router.message(F.text == "My bookings")
