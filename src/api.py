@@ -6,6 +6,7 @@ import os
 from typing import Any, Optional
 
 import aiohttp
+from dotenv import load_dotenv, find_dotenv
 
 
 class InNoHassleMusicRoomAPI:
@@ -147,7 +148,7 @@ class InNoHassleMusicRoomAPI:
     #             response_json = json.loads(response_text)
     #             return response, response_json
     async def book(
-        self, user_id: int, date: datetime.date, time_start: datetime.time, time_end: datetime.time
+            self, user_id: int, date: datetime.date, time_start: datetime.time, time_end: datetime.time
     ) -> tuple[bool, Any]:
         params = {
             "participant_id": user_id,
@@ -193,5 +194,26 @@ class InNoHassleMusicRoomAPI:
                 remaining_daily_hours = float(await response.text())
         return remaining_daily_hours
 
+    async def delete_booking(self, booking_id: int):
+        async with self._create_session() as session:
+            url = f"{self.api_root_path}/bookings/{booking_id}/cancel_booking"
+
+            params = {"booking_id": booking_id}
+            async with session.delete(url, params=params) as response:
+                return True if response.status == 200 else False
+
+    async def get_participant_bookings(self, participant_id: int):
+        url = f"{self.api_root_path}/bookings/{participant_id}"
+        params = {"participant_id": str(participant_id)}
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as response:
+                response_text = await response.text()
+                response_json = json.loads(response_text)
+                if response.status == 200:
+                    return response_json
+
+
+load_dotenv(find_dotenv())
 
 client = InNoHassleMusicRoomAPI(os.getenv("API_ROOT_PATH"))

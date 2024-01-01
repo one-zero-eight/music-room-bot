@@ -12,10 +12,10 @@ from src.handlers import routers
 load_dotenv(find_dotenv())
 
 bot = Bot(token=os.getenv("TOKEN"))
+dp = Dispatcher(storage=MemoryStorage())
 
 
 async def main():
-    dp = Dispatcher(storage=MemoryStorage())
     for router in routers:
         dp.include_router(router)
     setup_dialogs(dp)

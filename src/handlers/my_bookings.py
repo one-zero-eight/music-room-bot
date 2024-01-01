@@ -1,7 +1,6 @@
-import json
+from datetime import datetime
 
-import aiohttp
-from aiogram import Router, F
+from aiogram import Router, F, types
 from aiogram.types import Message
 
 from src.api import client
@@ -10,14 +9,32 @@ from src.keyboards import registration
 router = Router()
 
 
-async def get_participant_id(telegram_id: int):
-    url = "http://127.0.0.1:8000/participants/participant_id"
-    params = {"telegram_id": str(telegram_id)}
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, params=params) as response:
-            response_text = await response.text()
-            response_json = json.loads(response_text)
-            return response_json
+async def _create_inline_keyboard(bookings: list[dict]):
+    keyboard = [[]]
+
+    for booking in bookings:
+        button1_text = f"{booking['time_start']} - {booking['time_end'][-5:]}"
+        button2_text = 'Delete'
+
+        button1 = types.InlineKeyboardButton(text=button1_text, callback_data='plug')
+        button2 = types.InlineKeyboardButton(text=button2_text, callback_data=f'delete_{booking["id"]}')
+
+        keyboard += [[button1, button2]]
+
+    return types.InlineKeyboardMarkup(inline_keyboard=keyboard, row_width=2)
+
+
+@router.callback_query(lambda c: c.data.startswith('delete'))
+async def handle_delete_callback(callback_query: types.CallbackQuery):
+    booking_id = int(callback_query.data.split('_')[1])
+
+    response = await client.delete_booking(booking_id)
+    if response:
+        await callback_query.answer(text="You have successfully delete the booking", show_alert=True)
+        await show_my_bookings()
+    else:
+        await callback_query.answer(text="No such booking found", show_alert=True)
+        return False
 
 
 @router.message(F.text == "My bookings")
@@ -26,19 +43,20 @@ async def show_my_bookings(message: Message):
         await message.answer("Welcome! To continue, you need to register.", reply_markup=registration)
     else:
         telegram_id = message.from_user.id
-        participant_id = await get_participant_id(telegram_id)
-        url = f"http://127.0.0.1:8000/bookings/{participant_id}"
-        params = {"participant_id": str(participant_id)}
+        participant_id = await client.get_participant_id(telegram_id)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params) as response:
-                response_text = await response.text()
-                response_json = json.loads(response_text)
-                print(response_json)
+        bookings = await client.get_participant_bookings(participant_id)
 
-        msg = ""
+        if not len(bookings):
+            await message.answer("You don`t have active bookings.")
+        else:
+            bookings = [_get_pretty_datetime(entry) for entry in bookings]
+            await message.answer("Your active bookings:",
+                                 reply_markup=await _create_inline_keyboard(bookings))
 
-        for booking in response_json:
-            msg += booking["time_start"] + " " + booking["time_end"] + "\n"
 
-        await message.answer(msg)
+def _get_pretty_datetime(data):
+    for key in ['time_start', 'time_end']:
+        date_object = datetime.strptime(data[key], "%Y-%m-%dT%H:%M:%S")
+        data[key] = date_object.strftime("%b %d %H:%M")
+    return data
