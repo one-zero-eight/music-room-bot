@@ -15,9 +15,13 @@ aiohttp = "^3.8.6"
 aiogram-dialog = "^2.0.0"
 ruff = "^0.1.9"
 
-[tool.black]
-line-length = 120 # Maximum line length
-
+[tool.ruff]
+line-length = 120
+ignore = [
+    # wildcard imports are fine
+    "F403",
+    "F405",
+]
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

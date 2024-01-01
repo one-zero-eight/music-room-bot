@@ -23,7 +23,12 @@ class ImageScheduleCallbackData(CallbackData, prefix="schedule"):
 
 registration = types.InlineKeyboardMarkup(
     inline_keyboard=[
-        [types.InlineKeyboardButton(text="Register", callback_data=RegistrationCallbackData(key="register").pack())]
+        [
+            types.InlineKeyboardButton(
+                text="Register",
+                callback_data=RegistrationCallbackData(key="register").pack(),
+            )
+        ]
     ]
 )
 
@@ -36,9 +41,13 @@ phone_request_kb = types.ReplyKeyboardMarkup(
 confirm_email_kb = types.InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            types.InlineKeyboardButton(text="Yes", callback_data=RegistrationCallbackData(key="correct_email").pack()),
             types.InlineKeyboardButton(
-                text="Change email", callback_data=RegistrationCallbackData(key="change_email").pack()
+                text="Yes",
+                callback_data=RegistrationCallbackData(key="correct_email").pack(),
+            ),
+            types.InlineKeyboardButton(
+                text="Change email",
+                callback_data=RegistrationCallbackData(key="change_email").pack(),
             ),
         ]
     ]
@@ -48,9 +57,13 @@ image_schedule_kb = types.InlineKeyboardMarkup(
     inline_keyboard=[
         [
             types.InlineKeyboardButton(
-                text="Current", callback_data=ImageScheduleCallbackData(key="current_week").pack()
+                text="Current",
+                callback_data=ImageScheduleCallbackData(key="current_week").pack(),
             ),
-            types.InlineKeyboardButton(text="Next", callback_data=ImageScheduleCallbackData(key="next_week").pack()),
+            types.InlineKeyboardButton(
+                text="Next",
+                callback_data=ImageScheduleCallbackData(key="next_week").pack(),
+            ),
         ]
     ]
 )
