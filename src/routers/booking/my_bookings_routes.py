@@ -1,11 +1,29 @@
 from datetime import datetime
 
-from aiogram import Router, types, F
+from aiogram import types, F
+from aiogram.fsm.state import any_state
+from aiogram.types import Message
 
 from src.api import client
-from src.keyboards import MyBookingsCallbackData
+from src.routers.registration.keyboards import registration_kb
+from src.routers.booking.callback_data import MyBookingsCallbackData
+from src.routers.booking import router
 
-router = Router()
+
+@router.message(any_state, F.text == "My bookings")
+async def show_my_bookings(message: Message):
+    if not await client.is_user_exists(str(message.from_user.id)):
+        await message.answer("Welcome! To continue, you need to register.", reply_markup=registration_kb)
+    else:
+        telegram_id = message.from_user.id
+        participant_id = await client.get_participant_id(telegram_id)
+        bookings = await client.get_participant_bookings(participant_id)
+
+        if not bookings:
+            await message.answer("You don`t have active bookings.")
+        else:
+            bookings = [_get_pretty_datetime(entry) for entry in bookings]
+            await message.answer("Your active bookings:", reply_markup=await _create_inline_keyboard(bookings))
 
 
 async def _create_inline_keyboard(bookings: list[dict]):
