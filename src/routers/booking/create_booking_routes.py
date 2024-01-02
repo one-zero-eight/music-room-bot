@@ -1,38 +1,38 @@
 import datetime
+from typing import Any
 
 from aiogram import F
 from aiogram.fsm.state import any_state
-from aiogram.types import CallbackQuery, User, Message
+from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, Window, StartMode
 from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Group, Cancel, Row
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.api import client
-from src.routers.registration.keyboards import registration_kb
 from src.routers.booking import router
 from src.routers.booking.states import CreateBookingStates
 from src.routers.booking.widgets import TimeRangeWidget
 
 
 @router.message(any_state, F.text == "Create a booking")
-async def start_booking(message: Message, dialog_manager: DialogManager):
-    if not await client.is_user_exists(str(message.from_user.id)):
-        await message.answer("Welcome! To continue, you need to register.", reply_markup=registration_kb)
-    else:
-        await dialog_manager.start(CreateBookingStates.choose_date, mode=StartMode.NEW_STACK)
+async def start_booking(_message: Message, dialog_manager: DialogManager, api_user_id: int):
+    await dialog_manager.start(
+        CreateBookingStates.choose_date, mode=StartMode.NEW_STACK, data={"api_user_id": api_user_id}
+    )
 
 
-async def on_date_selected(_callback: CallbackQuery, _widget, manager: DialogManager, selected_date: datetime.date):
-    manager.dialog_data["selected_date"] = selected_date
-    await manager.next()
+async def on_date_selected(
+    _callback: CallbackQuery, _widget, dialog_manager: DialogManager, selected_date: datetime.date
+):
+    dialog_manager.dialog_data["selected_date"] = selected_date
+    await dialog_manager.next()
 
 
-async def on_time_confirmed(callback: CallbackQuery, _button: Button, manager: DialogManager):
-    telegram_id = callback.from_user.id
-    user_id = await client.get_participant_id(telegram_id)
-    date: datetime.date = manager.dialog_data.get("selected_date")
+async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_manager: DialogManager):
+    user_id = dialog_manager.start_data["api_user_id"]
+    date: datetime.date = dialog_manager.dialog_data["selected_date"]
 
-    chosen_timeslots = time_selection_widget.get_endpoint_timeslots(manager)
+    chosen_timeslots = time_selection_widget.get_endpoint_timeslots(dialog_manager)
 
     if len(chosen_timeslots) != 2:
         await callback.message.answer("You must choose both start and end time")
@@ -46,10 +46,10 @@ async def on_time_confirmed(callback: CallbackQuery, _button: Button, manager: D
         timeslot_text = f"{start.isoformat(timespec='minutes')} - {end.isoformat(timespec='minutes')}"
         text = f"You have successfully booked on <b>{date_text}, {timeslot_text}</b>"
         await callback.message.answer(text, parse_mode="HTML")
-        await manager.done()
+        await dialog_manager.done()
     else:
         await callback.message.answer(f"Error occurred: {error}")
-        await manager.switch_to(CreateBookingStates.choose_date)
+        await dialog_manager.switch_to(CreateBookingStates.choose_date)
 
 
 def generate_timeslots(start_time: datetime.time, end_time: datetime.time, interval: int) -> list[datetime.time]:
@@ -83,19 +83,16 @@ time_selection_widget = TimeRangeWidget(
 )
 
 
-async def getter_for_time_selection(dialog_manager: DialogManager, **kwargs) -> dict:
+async def getter_for_time_selection(dialog_manager: DialogManager, **_kwargs) -> dict:
     dialog_data: dict = dialog_manager.dialog_data
-    event_from_user: User = kwargs.get("event_from_user")
-    participant_id = await client.get_participant_id(event_from_user.id)
-    date: datetime.date = dialog_data.get("selected_date")
-    data = {"selected_date": date, "participant_id": participant_id}
-
+    participant_id = dialog_manager.start_data["api_user_id"]
+    date: datetime.date = dialog_data["selected_date"]
+    data: dict[str, Any] = {"selected_date": date, "participant_id": participant_id}
     hours = await client.get_remaining_daily_hours(participant_id, date)
     data["remaining_daily_hours"] = hours
     data["remaining_daily_hours_hours"] = int(hours)
     data["remaining_daily_hours_minutes"] = int((hours - data["remaining_daily_hours_hours"]) * 60)
     data["daily_bookings"] = await client.get_daily_bookings(date)
-
     return data
 
 
