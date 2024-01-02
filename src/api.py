@@ -172,10 +172,10 @@ class InNoHassleMusicRoomAPI:
     #             response_text = await response.text()
     #             response_json = json.loads(response_text)
     #             return response, response_json
-    async def get_daily_bookings(self) -> tuple[bool, Any]:
+    async def get_daily_bookings(self, date: Optional[datetime.date]) -> tuple[bool, Any]:
         async with self._create_session() as session:
             url = f"{self.api_root_path}/bookings/daily_bookings"
-            params = {"day": datetime.datetime.now().isoformat()}
+            params = {"date": date.isoformat() if date else datetime.date.today().isoformat()}
             async with session.get(url, params=params) as response:
                 if response.status == 200:
                     response_text = await response.text()
