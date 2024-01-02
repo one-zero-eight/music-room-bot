@@ -15,7 +15,7 @@ from src.keyboards import registration
 router = Router()
 
 
-class CreateBookingProcedure(StatesGroup):
+class CreateBookingStates(StatesGroup):
     choose_date = State()
     choose_time = State()
 
@@ -52,15 +52,7 @@ async def on_time_confirmed(callback: CallbackQuery, button: Button, manager: Di
         await manager.done()
     else:
         await callback.message.answer(f"Error occurred: {error}")
-        await manager.switch_to(CreateBookingProcedure.choose_date)
-
-
-@router.message(F.text == "Create a booking")
-async def _start_booking(message: Message, dialog_manager: DialogManager):
-    if not await client.is_user_exists(str(message.from_user.id)):
-        await message.answer("Welcome! To continue, you need to register.", reply_markup=registration)
-    else:
-        await dialog_manager.start(CreateBookingProcedure.choose_date, mode=StartMode.RESET_STACK)
+        await manager.switch_to(CreateBookingStates.choose_date)
 
 
 class TimeRangeWidget(Keyboard):
@@ -211,7 +203,7 @@ date_selection = Window(
     Const("Please select a date:"),
     Calendar(id="calendar", on_click=on_date_selected),
     Button(Const("Quit"), id="quit_dialog", on_click=quit_dialog),
-    state=CreateBookingProcedure.choose_date,
+    state=CreateBookingStates.choose_date,
 )
 
 time_selection_widget = TimeRangeWidget(
@@ -245,7 +237,8 @@ time_selection = Window(
     Back(),
     Button(Const("Done"), id="done", on_click=on_time_confirmed),
     getter=getter_for_time_selection,
-    state=CreateBookingProcedure.choose_time,
+    state=CreateBookingStates.choose_time,
+    parse_mode="HTML",
 )
 
 dialog = Dialog(date_selection, time_selection)
