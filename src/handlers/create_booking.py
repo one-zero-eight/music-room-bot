@@ -1,16 +1,15 @@
 import datetime
 from typing import Optional, List, Callable
 
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.filters.state import State, StatesGroup
-from aiogram.types import CallbackQuery, Message, InlineKeyboardButton, User
-from aiogram_dialog import Dialog, DialogManager, StartMode, Window, DialogProtocol
+from aiogram.types import CallbackQuery, InlineKeyboardButton, User
+from aiogram_dialog import Dialog, DialogManager, Window, DialogProtocol
 from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Keyboard, Group
-from aiogram_dialog.widgets.text import Const
+from aiogram_dialog.widgets.text import Const, Format
 
 from src.api import client
-from src.keyboards import registration
 
 router = Router()
 
@@ -21,10 +20,10 @@ class CreateBookingStates(StatesGroup):
 
 
 async def on_date_selected(
-        callback: CallbackQuery,
-        widget,
-        manager: DialogManager,
-        selected_date: datetime.date,
+    callback: CallbackQuery,
+    widget,
+    manager: DialogManager,
+    selected_date: datetime.date,
 ):
     manager.dialog_data["selected_date"] = selected_date
     await manager.next()
@@ -194,8 +193,7 @@ def generate_timeslots(start_time: datetime.time, end_time: datetime.time, inter
     return timeslots
 
 
-async def quit_dialog(callback: CallbackQuery, button: Button,
-                      manager: DialogManager):
+async def quit_dialog(callback: CallbackQuery, button: Button, manager: DialogManager):
     await manager.done()
 
 
