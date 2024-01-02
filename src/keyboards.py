@@ -21,6 +21,11 @@ class ImageScheduleCallbackData(CallbackData, prefix="schedule"):
     key: str
 
 
+class MyBookingsCallbackData(CallbackData, prefix="my_bookings"):
+    key: str
+    id: int = None
+
+
 registration = types.InlineKeyboardMarkup(
     inline_keyboard=[
         [
