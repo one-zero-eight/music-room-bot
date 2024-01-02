@@ -21,10 +21,10 @@ class CreateBookingProcedure(StatesGroup):
 
 
 async def on_date_selected(
-    callback: CallbackQuery,
-    widget,
-    manager: DialogManager,
-    selected_date: datetime.date,
+        callback: CallbackQuery,
+        widget,
+        manager: DialogManager,
+        selected_date: datetime.date,
 ):
     manager.dialog_data["selected_date"] = selected_date
     await manager.next()
@@ -123,11 +123,11 @@ class TimeRangeWidget(Keyboard):
         return keyboard
 
     async def _process_item_callback(
-        self,
-        callback: CallbackQuery,
-        data: str,
-        dialog: DialogProtocol,
-        manager: DialogManager,
+            self,
+            callback: CallbackQuery,
+            data: str,
+            dialog: DialogProtocol,
+            manager: DialogManager,
     ) -> bool:
         """
         Process callback from item
@@ -162,10 +162,10 @@ class TimeRangeWidget(Keyboard):
         return self.get_widget_data(manager, [])
 
     def __init__(
-        self,
-        timeslots: list[datetime.time] | Callable[..., list[datetime.time]],
-        id: Optional[str] = None,
-        when: WhenCondition = None,
+            self,
+            timeslots: list[datetime.time] | Callable[..., list[datetime.time]],
+            id: Optional[str] = None,
+            when: WhenCondition = None,
     ):
         super().__init__(id=id, when=when)
         self._timeslots = timeslots
@@ -194,14 +194,21 @@ def generate_timeslots(start_time: datetime.time, end_time: datetime.time, inter
     while current_time <= end_time:
         timeslots.append(current_time)
         current_time = (
-            datetime.datetime.combine(datetime.datetime.today(), current_time) + datetime.timedelta(minutes=interval)
+                datetime.datetime.combine(datetime.datetime.today(), current_time) + datetime.timedelta(
+            minutes=interval)
         ).time()
     return timeslots
+
+
+async def quit_dialog(callback: CallbackQuery, button: Button,
+                      manager: DialogManager):
+    await manager.done()
 
 
 date_selection = Window(
     Const("Please select a date:"),
     Calendar(id="calendar", on_click=on_date_selected),
+    Button(Const("Quit"), id="quit_dialog", on_click=quit_dialog),
     state=CreateBookingProcedure.choose_date,
 )
 
