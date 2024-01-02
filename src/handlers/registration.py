@@ -109,7 +109,7 @@ async def request_code(message: types.Message, state: FSMContext):
 async def request_phone_number(message: Message, state: FSMContext):
     phone_number = message.contact.phone_number
     await state.update_data(phone_number=phone_number)
-    await message.answer("Please, enter your name.")
+    await message.answer("Please, enter your full name.")
     await state.set_state(Registration.name_requested)
 
 

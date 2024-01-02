@@ -13,15 +13,15 @@ async def _create_inline_keyboard(bookings: list[dict]):
     keyboard = [[]]
 
     for booking in bookings:
-        button1_text = f"{booking['time_start']} - {booking['time_end'][-5:]}"
+        button1_text = f"{booking['time_start']}-{booking['time_end'][-5:]}             "
         button2_text = 'Cancel'
 
         button1 = types.InlineKeyboardButton(text=button1_text, callback_data='plug')
         button2 = types.InlineKeyboardButton(text=button2_text, callback_data=f'cancel_{booking["id"]}')
 
-        keyboard += [[button1, button2]]
+        keyboard.append([button1, button2])
 
-    return types.InlineKeyboardMarkup(inline_keyboard=keyboard, row_width=2)
+    return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
 @router.callback_query(lambda c: c.data.startswith('cancel'))
