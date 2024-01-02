@@ -80,10 +80,13 @@ class TimeRangeWidget(Keyboard):
         elif len(chosen) == 1:
             start = chosen[0]
             index_of_start = self.timeslots.index(chosen[0])
-
+            _date_for_compare = datetime.date.today()
             available_slots = []
-            for timeslot in self.timeslots[index_of_start + 1:]:
-                if timeslot.hour - start.hour >= hours:
+            for timeslot in self.timeslots[index_of_start + 1 :]:
+                diff = datetime.datetime.combine(_date_for_compare, timeslot) - datetime.datetime.combine(
+                    _date_for_compare, start
+                )
+                if diff.total_seconds() / 3600 > hours:
                     break
                 available_slots.append(timeslot)
             return available_slots
@@ -92,7 +95,7 @@ class TimeRangeWidget(Keyboard):
     async def _render_keyboard(self, data: dict, manager: DialogManager) -> List[List[InlineKeyboardButton]]:
         # get chosen (only first and last) timeslots
         endpoint_timeslots = self.get_widget_data(manager, [])
-        remaining_daily_hours = int(data.get("remaining_daily_hours", 2))
+        remaining_daily_hours = data.get("remaining_daily_hours", 2)
         available_timeslots = self.get_available_slots(endpoint_timeslots, remaining_daily_hours)
 
         # render keyboard
@@ -103,7 +106,7 @@ class TimeRangeWidget(Keyboard):
             callback_data = self._item_callback_data(timeslot.strftime("%H:%M"))
 
             if timeslot not in available_timeslots and timeslot not in endpoint_timeslots:
-                text = "."
+                text = " "
                 callback_data = self._item_callback_data("None")
 
             if endpoint_timeslots and timeslot == endpoint_timeslots[0]:
@@ -123,11 +126,11 @@ class TimeRangeWidget(Keyboard):
         return keyboard
 
     async def _process_item_callback(
-            self,
-            callback: CallbackQuery,
-            data: str,
-            dialog: DialogProtocol,
-            manager: DialogManager,
+        self,
+        callback: CallbackQuery,
+        data: str,
+        dialog: DialogProtocol,
+        manager: DialogManager,
     ) -> bool:
         """
         Process callback from item
@@ -162,10 +165,10 @@ class TimeRangeWidget(Keyboard):
         return self.get_widget_data(manager, [])
 
     def __init__(
-            self,
-            timeslots: list[datetime.time] | Callable[..., list[datetime.time]],
-            id: Optional[str] = None,
-            when: WhenCondition = None,
+        self,
+        timeslots: list[datetime.time] | Callable[..., list[datetime.time]],
+        id: Optional[str] = None,
+        when: WhenCondition = None,
     ):
         super().__init__(id=id, when=when)
         self._timeslots = timeslots
@@ -194,8 +197,7 @@ def generate_timeslots(start_time: datetime.time, end_time: datetime.time, inter
     while current_time <= end_time:
         timeslots.append(current_time)
         current_time = (
-                datetime.datetime.combine(datetime.datetime.today(), current_time) + datetime.timedelta(
-            minutes=interval)
+            datetime.datetime.combine(datetime.datetime.today(), current_time) + datetime.timedelta(minutes=interval)
         ).time()
     return timeslots
 
@@ -221,16 +223,24 @@ time_selection_widget = TimeRangeWidget(
 async def getter_for_time_selection(dialog_manager: DialogManager, **kwargs) -> dict:
     dialog_data: dict = dialog_manager.dialog_data
     event_from_user: User = kwargs.get("event_from_user")
-    date: datetime.date = dialog_data.get("selected_date")
-    if date is None:
-        return {}
     participant_id = await client.get_participant_id(event_from_user.id)
-    remaining_daily_hours = await client.get_remaining_daily_hours(participant_id, date)
-    return {"remaining_daily_hours": remaining_daily_hours}
+    date: datetime.date = dialog_data.get("selected_date")
+    data = {"selected_date": date, "participant_id": participant_id}
+
+    hours = await client.get_remaining_daily_hours(participant_id, date)
+    data["remaining_daily_hours"] = hours
+    data["remaining_daily_hours_hours"] = int(hours)
+    data["remaining_daily_hours_minutes"] = int((hours - data["remaining_daily_hours_hours"]) * 60)
+    data["daily_bookings"] = await client.get_daily_bookings(date)
+
+    return data
 
 
 time_selection = Window(
-    Const("Please select start time:"),
+    Format(
+        "Please select a time slot for <b>{dialog_data[selected_date]}</b>.\n"
+        "You have <b>{remaining_daily_hours_hours:0.0f}h {remaining_daily_hours_minutes:0.0f}m</b> free.",
+    ),
     Group(time_selection_widget, width=4),
     Back(),
     Button(Const("Done"), id="done", on_click=on_time_confirmed),
