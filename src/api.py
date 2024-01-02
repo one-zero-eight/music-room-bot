@@ -148,7 +148,7 @@ class InNoHassleMusicRoomAPI:
     #             response_json = json.loads(response_text)
     #             return response, response_json
     async def book(
-            self, user_id: int, date: datetime.date, time_start: datetime.time, time_end: datetime.time
+        self, user_id: int, date: datetime.date, time_start: datetime.time, time_end: datetime.time
     ) -> tuple[bool, Any]:
         params = {
             "participant_id": user_id,
