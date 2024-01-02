@@ -4,17 +4,9 @@ from aiogram import F, Router, types
 from aiogram.types import BufferedInputFile
 
 from src.api import client
-from src.keyboards import ImageScheduleCallbackData, image_schedule_kb
+from src.keyboards import ImageScheduleCallbackData
 
 router = Router()
-
-
-@router.message(F.text == "Show the image with bookings")
-async def get_image_schedule(message: types.Message):
-    await message.answer(
-        text="Do you want to see bookings for the current week or next one?",
-        reply_markup=image_schedule_kb,
-    )
 
 
 def get_start_of_week(current_week=True):
