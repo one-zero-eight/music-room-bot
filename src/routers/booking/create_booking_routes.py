@@ -49,6 +49,8 @@ async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_man
         await dialog_manager.done()
     else:
         await callback.message.answer(f"Error occurred: {error}")
+        widget = dialog_manager.find("time_selection")
+        widget.reset(dialog_manager)
         await dialog_manager.switch_to(CreateBookingStates.choose_date)
 
 
@@ -92,7 +94,7 @@ async def getter_for_time_selection(dialog_manager: DialogManager, **_kwargs) ->
     data["remaining_daily_hours"] = hours
     data["remaining_daily_hours_hours"] = int(hours)
     data["remaining_daily_hours_minutes"] = int((hours - data["remaining_daily_hours_hours"]) * 60)
-    data["daily_bookings"] = await client.get_daily_bookings(date)
+    _, data["daily_bookings"] = await client.get_daily_bookings(date)
     return data
 
 

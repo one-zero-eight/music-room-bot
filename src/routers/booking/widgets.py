@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, TypedDict
 
 from aiogram.types import InlineKeyboardButton, CallbackQuery
 from aiogram_dialog import DialogManager, DialogProtocol
@@ -7,10 +7,24 @@ from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.kbd import Keyboard
 
 
+class Booking(TypedDict):
+    id: int
+    participant_alias: str
+    time_start: str
+    time_end: str
+
+
 class TimeRangeWidget(Keyboard):
     """
     Widget for time selection: 07:00, 07:30, 08:00, ...
     """
+
+    def reset(self, manager: DialogManager):
+        """
+        Reset widget data
+        :param manager: dialog manager
+        """
+        self.set_widget_data(manager, [])
 
     def get_available_slots(self, chosen: list[datetime.time], hours: float) -> list[datetime.time]:
         """
@@ -19,6 +33,9 @@ class TimeRangeWidget(Keyboard):
         :param max_count: max number of chosen timeslots
         :return: list of available timeslots
         """
+
+        if hours <= 0:
+            return []
         if len(chosen) == 0:
             return self.timeslots
         elif len(chosen) == 1:
@@ -36,37 +53,60 @@ class TimeRangeWidget(Keyboard):
             return available_slots
         return []
 
+    def get_already_booked_timeslots(self, daily_bookings: list[Booking]) -> dict[datetime.time, Booking]:
+        """
+        Get already booked timeslots
+        :param daily_bookings: list of daily bookings
+        :return: list of already booked timeslots
+        """
+        already_booked_timeslots: dict[datetime.time, Booking] = {}
+        for timeslot in self.timeslots:
+            for booking in daily_bookings:
+                time_start = datetime.datetime.fromisoformat(booking["time_start"])
+                time_end = datetime.datetime.fromisoformat(booking["time_end"])
+
+                if time_start.time() <= timeslot <= time_end.time():
+                    already_booked_timeslots[timeslot] = booking
+                    break
+        return already_booked_timeslots
+
     async def _render_keyboard(self, data: dict, manager: DialogManager) -> List[List[InlineKeyboardButton]]:
         # get chosen (only first and last) timeslots
         endpoint_timeslots = self.get_widget_data(manager, [])
-        remaining_daily_hours = data.get("remaining_daily_hours", 2)
+        remaining_daily_hours = data["remaining_daily_hours"]
         available_timeslots = self.get_available_slots(endpoint_timeslots, remaining_daily_hours)
-
+        daily_bookings: list[Booking] = data["daily_bookings"]
+        already_booked_timeslots = self.get_already_booked_timeslots(daily_bookings)
+        interactive_timeslots = set(available_timeslots) | set(endpoint_timeslots)
+        for timeslot in already_booked_timeslots:
+            if timeslot in interactive_timeslots:
+                interactive_timeslots.remove(timeslot)
         # render keyboard
         keyboard = []
 
         for timeslot in self.timeslots:
-            text = timeslot.strftime("%H:%M")
-            callback_data = self._item_callback_data(timeslot.strftime("%H:%M"))
+            time_text = timeslot.strftime("%H:%M")
 
-            if timeslot not in available_timeslots and timeslot not in endpoint_timeslots:
-                text = " "
-                callback_data = self._item_callback_data("None")
+            if timeslot in interactive_timeslots:
+                if endpoint_timeslots and timeslot == endpoint_timeslots[0]:
+                    text = f"{time_text} -"
+                elif endpoint_timeslots and timeslot == endpoint_timeslots[-1]:
+                    text = f"- {time_text}"
+                else:
+                    text = time_text
+                button = InlineKeyboardButton(
+                    text=text,
+                    callback_data=self._item_callback_data(time_text),
+                )
 
-            if endpoint_timeslots and timeslot == endpoint_timeslots[0]:
-                text = f"{text} -"
-            if endpoint_timeslots and timeslot == endpoint_timeslots[-1]:
-                text = f"- {text}"
+            else:
+                if timeslot in already_booked_timeslots:
+                    booked_by = already_booked_timeslots[timeslot]["participant_alias"]
+                    button = InlineKeyboardButton(text="🔴", url=f"https://t.me/{booked_by}")
+                else:
+                    button = InlineKeyboardButton(text=" ", callback_data=self._item_callback_data("None"))
 
-            keyboard.append(
-                [
-                    InlineKeyboardButton(
-                        text=text,
-                        callback_data=callback_data,
-                    )
-                ]
-            )
-
+            keyboard.append([button])
         return keyboard
 
     async def _process_item_callback(
