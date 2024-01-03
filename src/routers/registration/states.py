@@ -6,3 +6,4 @@ class RegistrationStates(StatesGroup):
     code_requested = State()
     phone_number_requested = State()
     name_requested = State()
+    rules_confirmation_requested = State()

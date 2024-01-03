@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from aiogram import types, F
+from aiogram.filters import Command
 from aiogram.fsm.state import any_state
 from aiogram.types import Message
 
@@ -9,6 +10,7 @@ from src.routers.booking import router
 from src.routers.booking.callback_data import MyBookingsCallbackData
 
 
+@router.message(any_state, Command("my_bookings"))
 @router.message(any_state, F.text == "My bookings")
 async def show_my_bookings(message: Message, api_user_id: int):
     bookings = await client.get_participant_bookings(api_user_id)

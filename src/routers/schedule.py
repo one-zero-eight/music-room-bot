@@ -1,6 +1,7 @@
 import datetime
 
 from aiogram import F, Router, types
+from aiogram.filters import Command
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.state import any_state
 from aiogram.types import BufferedInputFile
@@ -32,6 +33,7 @@ image_schedule_kb = types.InlineKeyboardMarkup(
 )
 
 
+@router.message(any_state, Command("image_schedule"))
 @router.message(any_state, F.text == "Show the image with bookings")
 async def get_image_schedule(message: types.Message):
     await message.answer(

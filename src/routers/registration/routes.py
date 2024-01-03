@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from src.api import client
+from src.constants import rules_message, rules_confirmation_template
 from src.menu import menu_kb
 from src.routers.registration import router
 from src.routers.registration.keyboards import RegistrationCallbackData, phone_request_kb, confirm_email_kb
@@ -103,5 +104,29 @@ async def request_name(message: Message, state: FSMContext):
     if not success:
         await message.answer(error)
     else:
+        await state.update_data(name=message.text)
+
+        await message.answer("Please, read the rules and confirm that you agree with them.")
+        await asyncio.sleep(0.1)
+        confirm_kb = types.ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    types.KeyboardButton(
+                        text=rules_confirmation_template.format(name=message.text),
+                    )
+                ]
+            ],
+            resize_keyboard=True,
+            one_time_keyboard=True,
+        )
+        await message.answer(rules_message, reply_markup=confirm_kb)
+        await state.set_state(RegistrationStates.rules_confirmation_requested)
+
+
+@router.message(RegistrationStates.rules_confirmation_requested)
+async def confirm_rules(message: Message, state: FSMContext):
+    if message.text[:100] == rules_confirmation_template.format(name=(await state.get_data()).get("name"))[:100]:
         await message.answer("You have successfully registered.", reply_markup=menu_kb)
         await state.clear()
+    else:
+        await message.answer("You haven`t confirmed the rules. Please, try again.")

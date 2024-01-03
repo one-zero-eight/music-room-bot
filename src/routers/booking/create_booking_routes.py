@@ -2,6 +2,7 @@ import datetime
 from typing import Any
 
 from aiogram import F
+from aiogram.filters import Command
 from aiogram.fsm.state import any_state
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, Window, StartMode
@@ -14,6 +15,7 @@ from src.routers.booking.states import CreateBookingStates
 from src.routers.booking.widgets import TimeRangeWidget
 
 
+@router.message(any_state, Command("create_booking"))
 @router.message(any_state, F.text == "Create a booking")
 async def start_booking(_message: Message, dialog_manager: DialogManager, api_user_id: int):
     await dialog_manager.start(
