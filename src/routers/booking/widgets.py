@@ -9,6 +9,7 @@ from aiogram_dialog.widgets.kbd import Keyboard
 
 class Booking(TypedDict):
     id: int
+    participant_id: int
     participant_alias: str
     time_start: str
     time_end: str
@@ -101,8 +102,13 @@ class TimeRangeWidget(Keyboard):
 
             else:
                 if timeslot in already_booked_timeslots:
-                    booked_by = already_booked_timeslots[timeslot]["participant_alias"]
-                    button = InlineKeyboardButton(text="🔴", url=f"https://t.me/{booked_by}")
+                    booking = already_booked_timeslots[timeslot]
+                    booked_by_id = booking["participant_id"]
+                    booked_by_alias = booking["participant_alias"]
+                    if booked_by_id == manager.start_data["api_user_id"]:
+                        button = InlineKeyboardButton(text="🟢", callback_data=self._item_callback_data("None"))
+                    else:
+                        button = InlineKeyboardButton(text="🔴", url=f"https://t.me/{booked_by_alias}")
                 else:
                     button = InlineKeyboardButton(text=" ", callback_data=self._item_callback_data("None"))
 
