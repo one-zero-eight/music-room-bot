@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from aiogram import F, Router, types
@@ -21,11 +22,7 @@ image_schedule_kb = types.InlineKeyboardMarkup(
     inline_keyboard=[
         [
             types.InlineKeyboardButton(
-                text="Current",
-                callback_data=ImageScheduleCallbackData(key="current_week").pack(),
-            ),
-            types.InlineKeyboardButton(
-                text="Next",
+                text="Next week",
                 callback_data=ImageScheduleCallbackData(key="next_week").pack(),
             ),
         ]
@@ -36,8 +33,14 @@ image_schedule_kb = types.InlineKeyboardMarkup(
 @router.message(any_state, Command("image_schedule"))
 @router.message(any_state, F.text == "Show the image with bookings")
 async def get_image_schedule(message: types.Message):
+    start_of_week = get_start_of_week()
+    image_bytes = await client.get_image_schedule(start_of_week)
+    photo = BufferedInputFile(image_bytes, "schedule.png")
+    await message.answer("Sending image for the current week...")
+    await message.answer_photo(photo=photo)
+    await asyncio.sleep(0.1)
     await message.answer(
-        text="Do you want to see bookings for the current week or next one?",
+        text="Do you want to see bookings for the next week?",
         reply_markup=image_schedule_kb,
     )
 
@@ -68,3 +71,4 @@ async def get_image_schedule_for_current_week(callback: types.CallbackQuery):
     else:
         await callback.message.answer("Sending image for the next week...")
     await callback.bot.send_photo(chat_id=chat_id, photo=photo)
+    await callback.message.delete()
