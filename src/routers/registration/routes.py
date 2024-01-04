@@ -76,7 +76,7 @@ async def request_code(message: types.Message, state: FSMContext):
         )
         await asyncio.sleep(0.1)
         await message.answer(
-            text="Please provide access to your phone.",
+            text="Please provide access to your phone number.",
             reply_markup=phone_request_kb,
         )
         await state.set_state(RegistrationStates.phone_number_requested)
@@ -95,8 +95,8 @@ async def request_name(message: Message, state: FSMContext):
     user_data = await state.get_data()
 
     success, error = await client.fill_profile(
+        telegram_id=message.from_user.id,
         name=message.text,
-        email=user_data.get("email"),
         alias=message.from_user.username,
         phone_number=user_data.get("phone_number"),
     )

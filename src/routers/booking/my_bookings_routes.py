@@ -12,8 +12,8 @@ from src.routers.booking.callback_data import MyBookingsCallbackData
 
 @router.message(any_state, Command("my_bookings"))
 @router.message(any_state, F.text == "My bookings")
-async def show_my_bookings(message: Message, api_user_id: int):
-    bookings = await client.get_participant_bookings(api_user_id)
+async def show_my_bookings(message: Message):
+    bookings = await client.get_participant_bookings(message.from_user.id)
 
     if not bookings:
         await message.answer("You don`t have active bookings.")
@@ -44,7 +44,7 @@ async def _create_inline_keyboard(bookings: list[dict]):
 @router.callback_query(MyBookingsCallbackData.filter(F.key == "cancel"))
 async def handle_delete_callback(callback_query: types.CallbackQuery, callback_data: MyBookingsCallbackData):
     booking_id = callback_data.id
-    response = await client.delete_booking(booking_id)
+    response = await client.delete_booking(booking_id, callback_query.from_user.id)
     if response:
         await callback_query.answer(text="You have successfully cancel the booking")
     else:

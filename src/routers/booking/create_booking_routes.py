@@ -4,7 +4,7 @@ from typing import Any
 from aiogram import F
 from aiogram.filters import Command
 from aiogram.fsm.state import any_state
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, User
 from aiogram_dialog import Dialog, DialogManager, Window, StartMode
 from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Group, Cancel, Row
 from aiogram_dialog.widgets.text import Const, Format
@@ -31,7 +31,6 @@ async def on_date_selected(
 
 
 async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_manager: DialogManager):
-    user_id = dialog_manager.start_data["api_user_id"]
     date: datetime.date = dialog_manager.dialog_data["selected_date"]
 
     chosen_timeslots = time_selection_widget.get_endpoint_timeslots(dialog_manager)
@@ -41,7 +40,7 @@ async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_man
         return
     start, end = chosen_timeslots
 
-    success, error = await client.book(user_id, date, start, end)
+    success, error = await client.book(callback.from_user.id, date, start, end)
 
     if success:
         date_text = date.strftime("%B %d")
@@ -87,12 +86,12 @@ time_selection_widget = TimeRangeWidget(
 )
 
 
-async def getter_for_time_selection(dialog_manager: DialogManager, **_kwargs) -> dict:
+async def getter_for_time_selection(dialog_manager: DialogManager, event_from_user: User, **_kwargs) -> dict:
     dialog_data: dict = dialog_manager.dialog_data
     participant_id = dialog_manager.start_data["api_user_id"]
     date: datetime.date = dialog_data["selected_date"]
     data: dict[str, Any] = {"selected_date": date, "participant_id": participant_id}
-    hours = await client.get_remaining_daily_hours(participant_id, date)
+    hours = await client.get_remaining_daily_hours(event_from_user.id, date)
     data["remaining_daily_hours"] = hours
     data["remaining_daily_hours_hours"] = int(hours)
     data["remaining_daily_hours_minutes"] = int((hours - data["remaining_daily_hours_hours"]) * 60)
