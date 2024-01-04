@@ -21,9 +21,9 @@ rules_message = (
     "outside the room.\n"
     "- 🚫 Don't leave trash in the room. There is no trash bin in the room, the nearest one is located right at the "
     "entrance of the sports complex.\n"
-    "- 🚫 Do not fix instruments if they are broken (including broken strings on guitars). It’s better to report this "
+    "- 🚫 Do not fix instruments if they are broken (including broken strings on guitars). It's better to report this "
     "in the chat so that the technician can repair them in the future.\n"
-    "- ⚠️  If you don't know how to tune the instrument, don't do it yourself. Find someone who knows and ask him/her "
+    "- ⚠️ If you don't know how to tune the instrument, don't do it yourself. Find someone who knows and ask him/her "
     "to teach or help you with it.\n"
     "- ⚠️ Unnecessarily, do not move the equipment.\n"
 )

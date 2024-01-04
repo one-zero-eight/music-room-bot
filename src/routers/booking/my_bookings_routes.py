@@ -16,7 +16,7 @@ async def show_my_bookings(message: Message):
     bookings = await client.get_participant_bookings(message.from_user.id)
 
     if not bookings:
-        await message.answer("You don`t have active bookings.")
+        await message.answer("You don't have active bookings.")
     else:
         bookings = [_get_pretty_datetime(entry) for entry in bookings]
         await message.answer("Your active bookings:", reply_markup=await _create_inline_keyboard(bookings))

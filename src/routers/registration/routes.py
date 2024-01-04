@@ -25,7 +25,7 @@ async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMC
     else:
         await callback_query.bot.send_message(
             chat_id=callback_query.from_user.id,
-            text="You`re already registered.",
+            text="You're already registered.",
             reply_markup=menu_kb,
         )
 
@@ -129,4 +129,4 @@ async def confirm_rules(message: Message, state: FSMContext):
         await message.answer("You have successfully registered.", reply_markup=menu_kb)
         await state.clear()
     else:
-        await message.answer("You haven`t confirmed the rules. Please, try again.")
+        await message.answer("You haven't confirmed the rules. Please, try again.")
