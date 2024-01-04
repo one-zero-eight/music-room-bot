@@ -4,7 +4,9 @@ services:
   bot:
     build:
       dockerfile: ./deploy/Dockerfile
+      context: .
     restart: always
+    env_file: .env
     networks:
       - music-room
 

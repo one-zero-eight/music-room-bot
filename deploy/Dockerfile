@@ -27,20 +27,19 @@ RUN apt-get update \
         vim \
         netcat \
         build-essential \
-        libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry. Respects $POETRY_VERSION and $POETRY_HOME
-#ENV POETRY_VERSION=1.5.1
+ENV POETRY_VERSION=1.7.1
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=${POETRY_HOME} python3 - && \
+RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=${POETRY_HOME} python3 - --version ${POETRY_VERSION} && \
     chmod a+x /opt/poetry/bin/poetry
 
 # We copy our Python requirements here to cache them
 # and install only runtime deps using poetry
 WORKDIR $PYSETUP_PATH
 COPY ./poetry.lock ./pyproject.toml ./
-RUN poetry install --only main  # respects
+RUN poetry install --only main
 
 
 ###########################################################
@@ -56,9 +55,9 @@ RUN chmod +x /docker-entrypoint.sh
 RUN groupadd -g 1500 poetry && \
     useradd -m -u 1500 -g poetry poetry
 
-COPY . /code
+COPY --chown=poetry:poetry ./src /code/src
 USER poetry
 WORKDIR /code
 
 ENTRYPOINT /docker-entrypoint.sh $0 $@
-CMD ["python3", "-m" , "src.main"]
+CMD [ "python3", "-m" , "src.main" ]
