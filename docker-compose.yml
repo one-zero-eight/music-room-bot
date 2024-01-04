@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  bot:
+    build:
+      dockerfile: ./deploy/Dockerfile
+    restart: always
+    networks:
+      - music-room
+
+networks:
+  music-room:
+    external: true
