@@ -2,11 +2,13 @@ import asyncio
 import logging
 import os
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F
 from aiogram import types
-from aiogram.filters import Command
+from aiogram.filters import Command, ExceptionTypeFilter
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import ErrorEvent
 from aiogram_dialog import setup_dialogs
+from aiogram_dialog.api.exceptions import UnknownIntent
 from dotenv import find_dotenv, load_dotenv
 
 from src.constants import instructions_url, how_to_get_url, tg_chat_url, bot_name, bot_description, bot_commands
@@ -15,6 +17,11 @@ load_dotenv(find_dotenv())
 
 bot = Bot(token=os.getenv("TOKEN"))
 dp = Dispatcher(storage=MemoryStorage())
+
+
+@dp.error(ExceptionTypeFilter(UnknownIntent), F.update.callback_query.as_("callback_query"))
+async def unknown_intent_handler(event: ErrorEvent, callback_query: types.CallbackQuery):
+    await callback_query.answer("Unknown intent: Please, try to restart the action.")
 
 
 @dp.message(Command("start"))
