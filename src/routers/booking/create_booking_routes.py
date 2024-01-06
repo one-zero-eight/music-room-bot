@@ -55,6 +55,11 @@ async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_man
         await dialog_manager.switch_to(CreateBookingStates.choose_date)
 
 
+async def clear_selection(callback: CallbackQuery, _button: Button, dialog_manager: DialogManager):
+    widget = dialog_manager.find("time_selection")
+    widget.reset(dialog_manager)
+
+
 def generate_timeslots(start_time: datetime.time, end_time: datetime.time, interval: int) -> list[datetime.time]:
     """
     Generate timeslots from start_time to end_time with interval
@@ -108,7 +113,7 @@ time_selection = Window(
     ),
     Group(time_selection_widget, width=4),
     Row(
-        Back(Const("🔙")),
+        Back(Const("🔙"), on_click=clear_selection),
         Button(Const("✅"), id="done", on_click=on_time_confirmed),
     ),
     getter=getter_for_time_selection,

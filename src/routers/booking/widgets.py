@@ -131,7 +131,10 @@ class TimeRangeWidget(Keyboard):
         :return: True if processed
         """
         if data == "None":
-            return False
+            widget_data = self.get_widget_data(manager, [])
+            if widget_data:
+                self.set_widget_data(manager, [])
+                return True
 
         clicked_timeslot = datetime.time.fromisoformat(data)
 
