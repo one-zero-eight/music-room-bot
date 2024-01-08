@@ -12,6 +12,7 @@ bot_commands = [
     types.BotCommand(command="/create_booking", description="Create a booking"),
     types.BotCommand(command="/my_bookings", description="Show your bookings"),
     types.BotCommand(command="/image_schedule", description="Show the image with bookings"),
+    types.BotCommand(command="/export_participants", description="Export participants in docx format"),
 ]
 rules_message = (
     "After you have crossed the threshold of the room, you must follow the rules described below. In case of "

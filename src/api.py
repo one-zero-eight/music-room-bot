@@ -146,16 +146,26 @@ class InNoHassleMusicRoomAPI:
                 return True if response.status == 200 else False
 
     async def get_image_schedule(self, start_of_week: datetime.date) -> Optional[bytes]:
-        async with self._create_session() as session:
-            url = f"{self.api_root_path}/bookings/form_schedule"
-            params = {"start_of_week": start_of_week.isoformat()}
+        url = f"{self.api_root_path}/bookings/form_schedule"
+        params = {"start_of_week": start_of_week.isoformat()}
 
+        async with self._create_session() as session:
             async with session.get(url, params=params) as response:
                 if response.status == 200:
-                    image_bytes = await response.read()
-                    return image_bytes
+                    return await response.read()
+
+    async def export_participants(self, telegram_id: int) -> tuple[bytes, str]:
+        url = f"{self.api_root_path}/participants/export"
+
+        async with self._create_session() as session:
+            self._auth_session(session, telegram_id=telegram_id)
+            async with session.get(url) as response:
+                if response.status == 200:
+                    bytes_ = await response.read()
+                    filename = response.headers["Content-Disposition"].split("filename=")[1]
+                    return bytes_, filename
 
 
 load_dotenv(find_dotenv())
 
-client = InNoHassleMusicRoomAPI(os.getenv("API_ROOT_PATH"))
+client: InNoHassleMusicRoomAPI = InNoHassleMusicRoomAPI(os.getenv("API_ROOT_PATH"))
