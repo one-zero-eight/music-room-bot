@@ -28,4 +28,4 @@ rules_message = (
     "to teach or help you with it.\n"
     "- ⚠️ Unnecessarily, do not move the equipment.\n"
 )
-rules_confirmation_template = """I, {name}, agree to and will abide by the stated rules."""
+rules_confirmation_template = """I agree to and will abide by the stated rules."""

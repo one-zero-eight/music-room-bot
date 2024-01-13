@@ -10,6 +10,7 @@ from src.menu import menu_kb
 from src.routers.registration import router
 from src.routers.registration.keyboards import RegistrationCallbackData, phone_request_kb, confirm_email_kb
 from src.routers.registration.states import RegistrationStates
+from src.routers.registration.utils import is_cyrillic
 
 
 @router.callback_query(RegistrationCallbackData.filter(F.key == "register"))
@@ -86,46 +87,52 @@ async def request_code(message: types.Message, state: FSMContext):
 async def request_phone_number(message: Message, state: FSMContext):
     phone_number = message.contact.phone_number
     await state.update_data(phone_number=phone_number)
-    await message.answer("Please, enter your full name.")
+    await message.answer("Please, enter your fullname <b>in Russian</b>. <i>\nExample: Петров Иван Иванович</i>",
+                         parse_mode="HTML")
     await state.set_state(RegistrationStates.name_requested)
 
 
 @router.message(RegistrationStates.name_requested)
 async def request_name(message: Message, state: FSMContext):
-    user_data = await state.get_data()
-
-    success, error = await client.fill_profile(
-        telegram_id=message.from_user.id,
-        name=message.text,
-        alias=message.from_user.username,
-        phone_number=user_data.get("phone_number"),
-    )
-
-    if not success:
-        await message.answer(error)
+    if not await is_cyrillic(message.text):
+        await message.answer(
+            "Please, enter a valid fullname <b>in Russian</b>. <i>\nExample: Петров Иван Иванович</i>",
+            parse_mode="HTML")
     else:
-        await state.update_data(name=message.text)
+        user_data = await state.get_data()
 
-        await message.answer("Please, read the rules and confirm that you agree with them.")
-        await asyncio.sleep(0.1)
-        confirm_kb = types.ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    types.KeyboardButton(
-                        text=rules_confirmation_template.format(name=message.text),
-                    )
-                ]
-            ],
-            resize_keyboard=True,
-            one_time_keyboard=True,
+        success, error = await client.fill_profile(
+            telegram_id=message.from_user.id,
+            name=message.text,
+            alias=message.from_user.username,
+            phone_number=user_data.get("phone_number"),
         )
-        await message.answer(rules_message, reply_markup=confirm_kb)
-        await state.set_state(RegistrationStates.rules_confirmation_requested)
+
+        if not success:
+            await message.answer(error)
+        else:
+            await state.update_data(name=message.text)
+
+            await message.answer("Please, read the rules and confirm that you agree with them.")
+            await asyncio.sleep(0.1)
+            confirm_kb = types.ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        types.KeyboardButton(
+                            text=rules_confirmation_template.format(name=message.text),
+                        )
+                    ]
+                ],
+                resize_keyboard=True,
+                one_time_keyboard=True,
+            )
+            await message.answer(rules_message, reply_markup=confirm_kb)
+            await state.set_state(RegistrationStates.rules_confirmation_requested)
 
 
 @router.message(RegistrationStates.rules_confirmation_requested)
 async def confirm_rules(message: Message, state: FSMContext):
-    if message.text[:100] == rules_confirmation_template.format(name=(await state.get_data()).get("name"))[:100]:
+    if message.text[:100] == rules_confirmation_template.format(name=(await state.get_data()))[:100]:
         await message.answer("You have successfully registered.", reply_markup=menu_kb)
         await state.clear()
     else:
