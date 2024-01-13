@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 
 from aiogram import F, types
 from aiogram.fsm.context import FSMContext
@@ -49,15 +50,22 @@ async def change_email(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(RegistrationCallbackData.filter(F.key == "correct_email"))
 async def send_code(callback: types.CallbackQuery, state: FSMContext):
-    await callback.answer()
     user_data = await state.get_data()
-    email = user_data.get("email")
-    success, error = await client.start_registration(email)
-    if not success:
-        await callback.message.answer(error)
+    last_click = user_data.get("last_click", datetime.datetime(1970, 1, 1, 1, 1, 1))
+    difference_seconds: int = (datetime.datetime.now() - last_click).seconds
+
+    if difference_seconds > 60:
+        user_data = await state.get_data()
+        email = user_data.get("email")
+        success, error = await client.start_registration(email)
+        if not success:
+            await callback.message.answer(error)
+        else:
+            await callback.message.answer("We sent a one-time code on your email. Please, enter it.")
+            await state.set_state(RegistrationStates.code_requested)
+        await state.update_data(last_click=datetime.datetime.now())
     else:
-        await callback.message.answer("We sent a one-time code on your email. Please, enter it.")
-        await state.set_state(RegistrationStates.code_requested)
+        await callback.answer(text=f"You can send code once in a minute. {60 - difference_seconds} seconds left.")
 
 
 @router.message(RegistrationStates.code_requested)
