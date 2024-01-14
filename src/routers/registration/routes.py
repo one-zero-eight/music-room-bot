@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from src.api import client
-from src.constants import rules_message, rules_confirmation_message
+from src.constants import rules_message, rules_confirmation_message, instructions_url, how_to_get_url, tg_chat_url
 from src.filters import RegisteredUserFilter
 from src.menu import menu_kb
 from src.routers.registration import router
@@ -164,6 +164,22 @@ async def request_name(message: Message, state: FSMContext):
 async def confirm_rules(message: Message, state: FSMContext):
     if message.text[:100] == rules_confirmation_message.format(name=(await state.get_data()))[:100]:
         await message.answer("You have successfully registered.", reply_markup=menu_kb)
+
+        keyboard = types.InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    types.InlineKeyboardButton(text="Instructions", url=instructions_url),
+                    types.InlineKeyboardButton(text="Location", url=how_to_get_url),
+                    types.InlineKeyboardButton(text="Telegram chat", url=tg_chat_url),
+                ]
+            ]
+        )
+
+        await message.answer(
+            "If you have any questions, you can ask them in the chat or read the instructions.",
+            reply_markup=keyboard,
+        )
+
         await state.clear()
     else:
         await message.answer("You haven't confirmed the rules. Please, try again.")
