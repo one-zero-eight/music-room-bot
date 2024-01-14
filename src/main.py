@@ -118,5 +118,13 @@ async def main():
 
 
 if __name__ == "__main__":
+    import sys
+    import os
+    import time
+
+    if sys.platform != "win32":  # unix only
+        os.environ["TZ"] = "Europe/Moscow"
+        time.tzset()
+
     logging.basicConfig(level=logging.INFO)
     asyncio.run(main())
