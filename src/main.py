@@ -64,7 +64,7 @@ async def help_handler(message: types.Message):
     )
 
 
-@dp.message(Command("menu"))
+@dp.message(Command("menu"), RegisteredUserFilter())
 async def menu_handler(message: types.Message):
     from src.menu import menu_kb
 
