@@ -4,7 +4,7 @@ import os
 
 from aiogram import Bot, Dispatcher, F
 from aiogram import types
-from aiogram.filters import Command, ExceptionTypeFilter
+from aiogram.filters import Command, ExceptionTypeFilter, CommandStart
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import ErrorEvent
 from aiogram_dialog import setup_dialogs
@@ -12,6 +12,7 @@ from aiogram_dialog.api.exceptions import UnknownIntent
 from dotenv import find_dotenv, load_dotenv
 
 from src.constants import instructions_url, how_to_get_url, tg_chat_url, bot_name, bot_description, bot_commands
+from src.filters import RegisteredUserFilter
 
 load_dotenv(find_dotenv())
 
@@ -24,20 +25,18 @@ async def unknown_intent_handler(event: ErrorEvent, callback_query: types.Callba
     await callback_query.answer("Unknown intent: Please, try to restart the action.")
 
 
-@dp.message(Command("start"))
+@dp.message(CommandStart(), ~RegisteredUserFilter())
 async def start(message: types.Message):
-    from src.api import client
+    from src.routers.registration.keyboards import registration_kb
 
-    telegram_id = str(message.from_user.id)
-    res = await client.is_user_exists(telegram_id)
-    if res:
-        from src.menu import menu_kb
+    await message.answer("Welcome! To continue, you need to register.", reply_markup=registration_kb)
 
-        await message.answer("Welcome! Choose the action you're interested in.", reply_markup=menu_kb)
-    else:
-        from src.routers.registration.keyboards import registration_kb
 
-        await message.answer("Welcome! To continue, you need to register.", reply_markup=registration_kb)
+@dp.message(CommandStart(), RegisteredUserFilter())
+async def start_but_registered(message: types.Message):
+    from src.menu import menu_kb
+
+    await message.answer("Welcome! Choose the action you're interested in.", reply_markup=menu_kb)
 
 
 @dp.message(Command("help"))

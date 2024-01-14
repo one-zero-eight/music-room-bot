@@ -7,6 +7,7 @@ from aiogram.types import Message
 
 from src.api import client
 from src.constants import rules_message, rules_confirmation_message
+from src.filters import RegisteredUserFilter
 from src.menu import menu_kb
 from src.routers.registration import router
 from src.routers.registration.keyboards import (
@@ -20,25 +21,26 @@ from src.routers.registration.states import RegistrationStates
 from src.routers.registration.utils import is_cyrillic
 
 
-@router.callback_query(RegistrationCallbackData.filter(F.key == "register"))
+@router.callback_query(RegistrationCallbackData.filter(F.key == "register"), ~RegisteredUserFilter())
 async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.answer()
-    telegram_id = str(callback_query.from_user.id)
-    if not await client.is_user_exists(telegram_id):
-        await callback_query.bot.send_message(
-            chat_id=callback_query.from_user.id,
-            text="Enter your email. You will receive a one-time code for registration.",
-        )
-        await state.set_state(RegistrationStates.email_requested)
-    else:
-        await callback_query.bot.send_message(
-            chat_id=callback_query.from_user.id,
-            text="You're already registered.",
-            reply_markup=menu_kb,
-        )
+    await callback_query.bot.send_message(
+        chat_id=callback_query.from_user.id,
+        text="Enter your email. You will receive a one-time code for registration.",
+    )
+    await state.set_state(RegistrationStates.email_requested)
 
 
-@router.message(RegistrationStates.email_requested)
+@router.callback_query(RegistrationCallbackData.filter(F.key == "register"), RegisteredUserFilter())
+async def user_want_to_register_but_registered(callback_query: types.CallbackQuery):
+    await callback_query.bot.send_message(
+        chat_id=callback_query.from_user.id,
+        text="You're already registered.",
+        reply_markup=menu_kb,
+    )
+
+
+@router.message(RegistrationStates.email_requested, ~RegisteredUserFilter())
 async def request_email(message: Message, state: FSMContext):
     m = await message.answer(
         text=f"You entered {message.text}. Is it correct email?",
@@ -47,14 +49,14 @@ async def request_email(message: Message, state: FSMContext):
     await state.update_data(email=message.text, request_email_message_id=m.message_id)
 
 
-@router.callback_query(RegistrationCallbackData.filter(F.key == "change_email"))
+@router.callback_query(RegistrationCallbackData.filter(F.key == "change_email"), ~RegisteredUserFilter())
 async def change_email(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.answer("Please enter your email again.")
     await state.set_state(RegistrationStates.email_requested)
 
 
-@router.callback_query(RegistrationCallbackData.filter(F.key == "correct_email"))
+@router.callback_query(RegistrationCallbackData.filter(F.key == "correct_email"), ~RegisteredUserFilter())
 async def send_code(callback: types.CallbackQuery, state: FSMContext):
     if not are_equal_keyboards(callback.message.reply_markup, resend_code_kb):
         await callback.message.edit_reply_markup(reply_markup=resend_code_kb)
@@ -77,7 +79,7 @@ async def send_code(callback: types.CallbackQuery, state: FSMContext):
         await callback.answer(text=f"You can send code once in a minute. {60 - difference_seconds} seconds left.")
 
 
-@router.message(RegistrationStates.code_requested)
+@router.message(RegistrationStates.code_requested, ~RegisteredUserFilter())
 async def request_code(message: types.Message, state: FSMContext, bot: Bot):
     user_data = await state.get_data()
     email = user_data.get("email")

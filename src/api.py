@@ -44,10 +44,10 @@ class InNoHassleMusicRoomAPI:
                 elif response.status == 400:
                     return False, "Incorrect code. Please, enter the code again."
 
-    async def is_user_exists(self, telegram_id: str) -> bool:
+    async def is_user_exists(self, telegram_id: int) -> bool:
         async with self._create_session() as session:
             url = f"{self.api_root_path}/auth/is_user_exists"
-            params = {"telegram_id": telegram_id}
+            params = {"telegram_id": str(telegram_id)}
             async with session.get(url, params=params) as response:
                 response_text = await response.text()
                 user_exists = json.loads(response_text)
