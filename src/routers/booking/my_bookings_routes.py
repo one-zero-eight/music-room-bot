@@ -47,6 +47,21 @@ async def handle_delete_callback(callback_query: types.CallbackQuery, callback_d
     response = await client.delete_booking(booking_id, callback_query.from_user.id)
     if response:
         await callback_query.answer(text="You have successfully cancel the booking")
+        inline_keyboard = callback_query.message.reply_markup.inline_keyboard
+        edited = False
+        for i, row in enumerate(inline_keyboard):
+            for j, button in enumerate(row):
+                if button.callback_data == callback_data.pack():
+                    inline_keyboard[i][j] = types.InlineKeyboardButton(
+                        text="Cancelled", callback_data=MyBookingsCallbackData(id=booking_id, key="none").pack()
+                    )
+                    edited = True
+                    break
+        if edited:
+            await callback_query.message.edit_reply_markup(
+                reply_markup=types.InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
+            )
+
     else:
         await callback_query.answer(text="No such booking found")
 
