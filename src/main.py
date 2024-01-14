@@ -11,7 +11,14 @@ from aiogram_dialog import setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent
 from dotenv import find_dotenv, load_dotenv
 
-from src.constants import instructions_url, how_to_get_url, tg_chat_url, bot_name, bot_description, bot_commands
+from src.constants import (
+    instructions_url,
+    how_to_get_url,
+    tg_chat_url,
+    bot_name,
+    bot_description,
+    bot_commands,
+)
 from src.filters import RegisteredUserFilter
 
 load_dotenv(find_dotenv())

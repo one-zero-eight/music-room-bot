@@ -1,14 +1,22 @@
-__all__ = ["client", "InNoHassleMusicRoomAPI"]
+__all__ = ["client", "InNoHassleMusicRoomAPI", "ParticipantStatus"]
 
 import datetime
 import json
 import os
+from enum import StrEnum
 from typing import Any, Optional
 
 import aiohttp
 from dotenv import load_dotenv, find_dotenv
 
 _BOT_TOKEN = os.getenv("TOKEN")
+
+
+class ParticipantStatus(StrEnum):
+    FREE = "free"
+    MIDDLE = "middle"
+    SENIOR = "senior"
+    LORD = "lord"
 
 
 class InNoHassleMusicRoomAPI:
@@ -61,6 +69,16 @@ class InNoHassleMusicRoomAPI:
                 response_text = await response.text()
                 response_json = json.loads(response_text)
                 return response_json
+
+    async def get_me(self, telegram_id: int) -> Optional[dict]:
+        url = f"{self.api_root_path}/participants/me"
+        async with self._create_session() as session:
+            self._auth_session(session, telegram_id)
+            async with session.get(url) as response:
+                response_text = await response.text()
+                response_json = json.loads(response_text)
+                if response.status == 200:
+                    return response_json
 
     async def fill_profile(self, telegram_id: int, name: str, alias: str, phone_number: str) -> tuple[bool, Any]:
         url = f"{self.api_root_path}/participants/me/fill_profile"
