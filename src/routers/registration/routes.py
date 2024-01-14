@@ -64,6 +64,7 @@ async def send_code(callback: types.CallbackQuery, state: FSMContext):
             await callback.message.answer("We sent a one-time code on your email. Please, enter it.")
             await state.set_state(RegistrationStates.code_requested)
         await state.update_data(last_click=datetime.datetime.now())
+        await callback.answer()
     else:
         await callback.answer(text=f"You can send code once in a minute. {60 - difference_seconds} seconds left.")
 
@@ -95,8 +96,9 @@ async def request_code(message: types.Message, state: FSMContext):
 async def request_phone_number(message: Message, state: FSMContext):
     phone_number = message.contact.phone_number
     await state.update_data(phone_number=phone_number)
-    await message.answer("Please, enter your fullname <b>in Russian</b>. <i>\nExample: Петров Иван Иванович</i>",
-                         parse_mode="HTML")
+    await message.answer(
+        "Please, enter your fullname <b>in Russian</b>. <i>\nExample: Петров Иван Иванович</i>", parse_mode="HTML"
+    )
     await state.set_state(RegistrationStates.name_requested)
 
 
@@ -105,7 +107,8 @@ async def request_name(message: Message, state: FSMContext):
     if not await is_cyrillic(message.text):
         await message.answer(
             "Please, enter a valid fullname <b>in Russian</b>. <i>\nExample: Петров Иван Иванович</i>",
-            parse_mode="HTML")
+            parse_mode="HTML",
+        )
     else:
         user_data = await state.get_data()
 
