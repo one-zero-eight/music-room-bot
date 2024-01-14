@@ -6,7 +6,8 @@ from aiogram.filters import Command
 from aiogram.fsm.state import any_state
 from aiogram.types import CallbackQuery, Message, User
 from aiogram_dialog import Dialog, DialogManager, Window, StartMode
-from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Group, Cancel, Row
+from aiogram_dialog.widgets.input import MessageInput
+from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Group, Cancel, Row, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.api import client
@@ -112,6 +113,7 @@ time_selection = Window(
         "🔴 - booked by someone else\n"
     ),
     Group(time_selection_widget, width=4),
+    SwitchTo(Const("Custom Time"), state=CreateBookingStates.choose_time_manually, id="custom_time"),
     Row(
         Back(Const("🔙"), on_click=clear_selection),
         Button(Const("✅"), id="done", on_click=on_time_confirmed),
@@ -121,6 +123,22 @@ time_selection = Window(
     parse_mode="HTML",
 )
 
-dialog = Dialog(date_selection, time_selection)
+
+async def time_selection_input(message: Message, message_input: MessageInput, dialog_mamnager: DialogManager):
+    pass
+
+
+time_selection_manually = Window(
+    Const("Write the timeslot in the format HH:MM - HH:MM"),
+    MessageInput(time_selection_input),
+    Row(
+        Back(Const("🔙"), on_click=clear_selection),
+        Button(Const("✅"), id="done", on_click=on_time_confirmed),
+    ),
+    state=CreateBookingStates.choose_time_manually,
+    parse_mode="HTML",
+)
+
+dialog = Dialog(date_selection, time_selection, time_selection_manually)
 
 router.include_router(dialog)

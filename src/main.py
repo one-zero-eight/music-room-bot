@@ -1,12 +1,14 @@
 import asyncio
 import logging
 import os
+from typing import Any
 
 from aiogram import Bot, Dispatcher, F
 from aiogram import types
+from aiogram.dispatcher.event.bases import UNHANDLED
 from aiogram.filters import Command, ExceptionTypeFilter, CommandStart
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import ErrorEvent
+from aiogram.types import ErrorEvent, Update, User
 from aiogram_dialog import setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent
 from dotenv import find_dotenv, load_dotenv
@@ -23,8 +25,25 @@ from src.filters import RegisteredUserFilter
 
 load_dotenv(find_dotenv())
 
+
+class CustomDispatcher(Dispatcher):
+    async def _send_dunno_message(self, bot: Bot, chat_id: int):
+        await bot.send_message(
+            chat_id,
+            "⚡️ I don't understand you. Please, try to restart the action.",
+        )
+
+    async def _listen_update(self, update: Update, **kwargs) -> Any:
+        res = await super()._listen_update(update, **kwargs)
+        if res is UNHANDLED:
+            bot: Bot = kwargs.get("bot")
+            event_from_user: User = kwargs.get("event_from_user")
+            await self._send_dunno_message(bot, event_from_user.id)
+        return res
+
+
 bot = Bot(token=os.getenv("TOKEN"))
-dp = Dispatcher(storage=MemoryStorage())
+dp = CustomDispatcher(storage=MemoryStorage())
 
 
 @dp.error(ExceptionTypeFilter(UnknownIntent), F.update.callback_query.as_("callback_query"))
@@ -76,11 +95,6 @@ from src.routers import routers  # noqa: E402
 for router in routers:
     dp.include_router(router)
 setup_dialogs(dp)
-
-
-@dp.message()
-async def unknown_message(message: types.Message):
-    await message.answer("⚡️ I don't understand you. Please, try again.")
 
 
 async def main():
