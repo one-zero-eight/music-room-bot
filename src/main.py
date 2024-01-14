@@ -71,12 +71,19 @@ async def menu_handler(message: types.Message):
     await message.answer("Choose the action you're interested in.", reply_markup=menu_kb)
 
 
-async def main():
-    from src.routers import routers
+from src.routers import routers  # noqa: E402
 
-    for router in routers:
-        dp.include_router(router)
-    setup_dialogs(dp)
+for router in routers:
+    dp.include_router(router)
+setup_dialogs(dp)
+
+
+@dp.message()
+async def unknown_message(message: types.Message):
+    await message.answer("⚡️ I don't understand you. Please, try again.")
+
+
+async def main():
     # Set bot name, description and commands
     existing_bot = {
         "name": (await bot.get_my_name()).name,
