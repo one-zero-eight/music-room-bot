@@ -30,7 +30,7 @@ the [InNoHassle-MusicRoom](https://github.com/one-zero-eight/InNoHassle-MusicRoo
     ```
     2. Run bot
    ```
-   docker-compose up
+   docker-compose up --build
    ```
 
    
