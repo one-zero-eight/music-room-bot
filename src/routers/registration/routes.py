@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from src.api import client
-from src.constants import rules_message, rules_confirmation_template
+from src.constants import rules_message, rules_confirmation_message
 from src.menu import menu_kb
 from src.routers.registration import router
 from src.routers.registration.keyboards import (
@@ -147,7 +147,7 @@ async def request_name(message: Message, state: FSMContext):
                 keyboard=[
                     [
                         types.KeyboardButton(
-                            text=rules_confirmation_template.format(name=message.text),
+                            text=rules_confirmation_message,
                         )
                     ]
                 ],
@@ -160,7 +160,7 @@ async def request_name(message: Message, state: FSMContext):
 
 @router.message(RegistrationStates.rules_confirmation_requested)
 async def confirm_rules(message: Message, state: FSMContext):
-    if message.text[:100] == rules_confirmation_template.format(name=(await state.get_data()))[:100]:
+    if message.text[:100] == rules_confirmation_message.format(name=(await state.get_data()))[:100]:
         await message.answer("You have successfully registered.", reply_markup=menu_kb)
         await state.clear()
     else:
