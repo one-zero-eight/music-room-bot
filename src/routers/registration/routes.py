@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 
-from aiogram import F, types
+from aiogram import F, types, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
@@ -9,7 +9,13 @@ from src.api import client
 from src.constants import rules_message, rules_confirmation_template
 from src.menu import menu_kb
 from src.routers.registration import router
-from src.routers.registration.keyboards import RegistrationCallbackData, phone_request_kb, confirm_email_kb
+from src.routers.registration.keyboards import (
+    RegistrationCallbackData,
+    phone_request_kb,
+    confirm_email_kb,
+    resend_code_kb,
+    are_equal_keyboards,
+)
 from src.routers.registration.states import RegistrationStates
 from src.routers.registration.utils import is_cyrillic
 
@@ -34,11 +40,11 @@ async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMC
 
 @router.message(RegistrationStates.email_requested)
 async def request_email(message: Message, state: FSMContext):
-    await state.update_data(email=message.text)
-    await message.answer(
+    m = await message.answer(
         text=f"You entered {message.text}. Is it correct email?",
         reply_markup=confirm_email_kb,
     )
+    await state.update_data(email=message.text, request_email_message_id=m.message_id)
 
 
 @router.callback_query(RegistrationCallbackData.filter(F.key == "change_email"))
@@ -50,6 +56,8 @@ async def change_email(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(RegistrationCallbackData.filter(F.key == "correct_email"))
 async def send_code(callback: types.CallbackQuery, state: FSMContext):
+    if not are_equal_keyboards(callback.message.reply_markup, resend_code_kb):
+        await callback.message.edit_reply_markup(reply_markup=resend_code_kb)
     user_data = await state.get_data()
     last_click = user_data.get("last_click", datetime.datetime(1970, 1, 1, 1, 1, 1))
     difference_seconds: int = (datetime.datetime.now() - last_click).seconds
@@ -70,7 +78,7 @@ async def send_code(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.message(RegistrationStates.code_requested)
-async def request_code(message: types.Message, state: FSMContext):
+async def request_code(message: types.Message, state: FSMContext, bot: Bot):
     user_data = await state.get_data()
     email = user_data.get("email")
     telegram_id = str(message.from_user.id)
@@ -81,6 +89,15 @@ async def request_code(message: types.Message, state: FSMContext):
     if not success:
         await message.answer(error)
     else:
+        request_email_message_id = user_data.get("request_email_message_id")
+        if request_email_message_id:
+            await bot.edit_message_text(
+                text=f"Your email {email} is verified.",
+                chat_id=message.chat.id,
+                message_id=request_email_message_id,
+                reply_markup=None,
+            )
+
         await message.answer(
             text="Your code has been accepted. To use the music room, you need to fill out your profile."
         )

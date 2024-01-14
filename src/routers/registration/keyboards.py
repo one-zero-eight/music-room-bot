@@ -35,3 +35,18 @@ confirm_email_kb = types.InlineKeyboardMarkup(
         ]
     ]
 )
+
+resend_code_kb = types.InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            types.InlineKeyboardButton(
+                text="Resend code",
+                callback_data=RegistrationCallbackData(key="correct_email").pack(),
+            )
+        ]
+    ]
+)
+
+
+def are_equal_keyboards(self: types.InlineKeyboardMarkup, other: types.InlineKeyboardMarkup) -> bool:
+    return self.model_dump() == other.model_dump()
