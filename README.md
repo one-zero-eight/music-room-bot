@@ -7,7 +7,7 @@ the [InNoHassle-MusicRoom](https://github.com/one-zero-eight/InNoHassle-MusicRoo
 
 1. Install dependencies with [poetry](https://python-poetry.org/docs/).
     ```bash
-    poetry install
+    poetry install --no-root
     ```
 
 2. Setup environment variables in `.env` file.
