@@ -8,7 +8,7 @@ from aiogram import types
 from aiogram.dispatcher.event.bases import UNHANDLED
 from aiogram.filters import Command, ExceptionTypeFilter, CommandStart
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from aiogram.types import ErrorEvent, Update, User
 from aiogram_dialog import setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent
@@ -44,9 +44,9 @@ class CustomDispatcher(Dispatcher):
 
 
 bot = Bot(token=os.getenv("TOKEN"))
-if os.getenv("REDIS_ENABLED"):
-    REDIS_URL = os.getenv("REDIS_URL")
-    storage = RedisStorage.from_url(REDIS_URL)
+REDIS_URL = os.getenv("REDIS_URL")
+if REDIS_URL:
+    storage = RedisStorage.from_url(REDIS_URL, key_builder=DefaultKeyBuilder(with_destiny=True))
     dp = CustomDispatcher(storage=storage)
 else:
     dp = CustomDispatcher(storage=MemoryStorage())
