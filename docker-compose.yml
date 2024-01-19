@@ -10,6 +10,17 @@ services:
     networks:
       - music-room
 
+  redis:
+    build: ./redis
+    restart: always
+    volumes:
+      - redis:/data
+    networks:
+      - music-room
+
 networks:
   music-room:
     external: true
+
+volumes:
+  redis:
