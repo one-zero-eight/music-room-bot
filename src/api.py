@@ -9,6 +9,8 @@ from typing import Any, Optional
 import aiohttp
 from dotenv import load_dotenv, find_dotenv
 
+load_dotenv(find_dotenv())
+
 _BOT_TOKEN = os.getenv("TOKEN")
 
 
@@ -98,12 +100,12 @@ class InNoHassleMusicRoomAPI:
                     return False, "There was an error during filling profile."
 
     async def get_remaining_daily_hours(
-        self,
-        telegram_id: int,
-        date: datetime.date,
+            self,
+            telegram_id: int,
+            date: str,
     ) -> Optional[float]:
         url = f"{self.api_root_path}/participants/me/remaining_daily_hours"
-        params = {"date": date.isoformat()}
+        params = {"date": date}
 
         async with self._create_session() as session:
             self._auth_session(session, telegram_id)
@@ -113,10 +115,10 @@ class InNoHassleMusicRoomAPI:
                 remaining_daily_hours = float(await response.text())
         return remaining_daily_hours
 
-    async def get_daily_bookings(self, date: Optional[datetime.date]) -> tuple[bool, Any]:
+    async def get_daily_bookings(self, date: Optional[str]) -> tuple[bool, Any]:
         async with self._create_session() as session:
             url = f"{self.api_root_path}/bookings/daily_bookings"
-            params = {"date": date.isoformat() if date else datetime.date.today().isoformat()}
+            params = {"date": date if date else datetime.date.today().isoformat()}
             async with session.get(url, params=params) as response:
                 if response.status == 200:
                     response_text = await response.text()
@@ -126,7 +128,7 @@ class InNoHassleMusicRoomAPI:
                     return False, None
 
     async def book(
-        self, telegram_id: int, date: datetime.date, time_start: datetime.time, time_end: datetime.time
+            self, telegram_id: int, date: datetime.date, time_start: datetime.time, time_end: datetime.time
     ) -> tuple[bool, Any]:
         url = f"{self.api_root_path}/bookings/"
         params = {

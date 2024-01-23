@@ -6,8 +6,7 @@ from aiogram.filters import Command
 from aiogram.fsm.state import any_state
 from aiogram.types import CallbackQuery, Message, User
 from aiogram_dialog import Dialog, DialogManager, Window, StartMode
-from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Group, Cancel, Row, SwitchTo
+from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Group, Cancel, Row
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.api import client
@@ -25,14 +24,15 @@ async def start_booking(_message: Message, dialog_manager: DialogManager, api_us
 
 
 async def on_date_selected(
-    _callback: CallbackQuery, _widget, dialog_manager: DialogManager, selected_date: datetime.date
+        _callback: CallbackQuery, _widget, dialog_manager: DialogManager, selected_date: datetime.date
 ):
-    dialog_manager.dialog_data["selected_date"] = selected_date
+    dialog_manager.dialog_data["selected_date"] = selected_date.isoformat()
     await dialog_manager.next()
 
 
 async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_manager: DialogManager):
-    date: datetime.date = dialog_manager.dialog_data["selected_date"]
+    date_string: str = dialog_manager.dialog_data["selected_date"]
+    date: datetime.datetime = datetime.datetime.fromisoformat(date_string)
 
     chosen_timeslots = time_selection_widget.get_endpoint_timeslots(dialog_manager)
 
@@ -40,6 +40,8 @@ async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_man
         await callback.message.answer("You must choose both start and end time")
         return
     start, end = chosen_timeslots
+    start = datetime.datetime.strptime(start, '%H:%M:%S').time()
+    end = datetime.datetime.strptime(end, '%H:%M:%S').time()
 
     success, error = await client.book(callback.from_user.id, date, start, end)
 
@@ -74,7 +76,8 @@ def generate_timeslots(start_time: datetime.time, end_time: datetime.time, inter
     while current_time <= end_time:
         timeslots.append(current_time)
         current_time = (
-            datetime.datetime.combine(datetime.datetime.today(), current_time) + datetime.timedelta(minutes=interval)
+                datetime.datetime.combine(datetime.datetime.today(), current_time) + datetime.timedelta(
+            minutes=interval)
         ).time()
     return timeslots
 
@@ -95,7 +98,7 @@ time_selection_widget = TimeRangeWidget(
 async def getter_for_time_selection(dialog_manager: DialogManager, event_from_user: User, **_kwargs) -> dict:
     dialog_data: dict = dialog_manager.dialog_data
     participant_id = dialog_manager.start_data["api_user_id"]
-    date: datetime.date = dialog_data["selected_date"]
+    date: str = dialog_data["selected_date"]
     data: dict[str, Any] = {"selected_date": date, "participant_id": participant_id}
     hours = await client.get_remaining_daily_hours(event_from_user.id, date)
     data["remaining_daily_hours"] = hours
@@ -113,7 +116,6 @@ time_selection = Window(
         "🔴 - booked by someone else\n"
     ),
     Group(time_selection_widget, width=4),
-    SwitchTo(Const("Custom Time"), state=CreateBookingStates.choose_time_manually, id="custom_time"),
     Row(
         Back(Const("🔙"), on_click=clear_selection),
         Button(Const("✅"), id="done", on_click=on_time_confirmed),
@@ -123,22 +125,6 @@ time_selection = Window(
     parse_mode="HTML",
 )
 
-
-async def time_selection_input(message: Message, message_input: MessageInput, dialog_mamnager: DialogManager):
-    pass
-
-
-time_selection_manually = Window(
-    Const("Write the timeslot in the format HH:MM - HH:MM"),
-    MessageInput(time_selection_input),
-    Row(
-        Back(Const("🔙"), on_click=clear_selection),
-        Button(Const("✅"), id="done", on_click=on_time_confirmed),
-    ),
-    state=CreateBookingStates.choose_time_manually,
-    parse_mode="HTML",
-)
-
-dialog = Dialog(date_selection, time_selection, time_selection_manually)
+dialog = Dialog(date_selection, time_selection)
 
 router.include_router(dialog)

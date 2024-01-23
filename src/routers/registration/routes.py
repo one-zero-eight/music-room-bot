@@ -1,5 +1,5 @@
 import asyncio
-import datetime
+import time
 
 from aiogram import F, types, Bot
 from aiogram.fsm.context import FSMContext
@@ -61,8 +61,8 @@ async def send_code(callback: types.CallbackQuery, state: FSMContext):
     if not are_equal_keyboards(callback.message.reply_markup, resend_code_kb):
         await callback.message.edit_reply_markup(reply_markup=resend_code_kb)
     user_data = await state.get_data()
-    last_click = user_data.get("last_click", datetime.datetime(1970, 1, 1, 1, 1, 1))
-    difference_seconds: int = (datetime.datetime.now() - last_click).seconds
+    last_click = user_data.get("last_click", time.mktime((1970, 1, 1, 0, 0, 0, 0, 0, 0)))
+    difference_seconds: int = round(time.time() - last_click)
 
     if difference_seconds > 60:
         user_data = await state.get_data()
@@ -73,7 +73,7 @@ async def send_code(callback: types.CallbackQuery, state: FSMContext):
         else:
             await callback.message.answer("We sent a one-time code on your email. Please, enter it.")
             await state.set_state(RegistrationStates.code_requested)
-        await state.update_data(last_click=datetime.datetime.now())
+        await state.update_data(last_click=time.time())
         await callback.answer()
     else:
         await callback.answer(text=f"You can send code once in a minute. {60 - difference_seconds} seconds left.")

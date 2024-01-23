@@ -44,7 +44,7 @@ class TimeRangeWidget(Keyboard):
             index_of_start = self.timeslots.index(chosen[0])
             _date_for_compare = datetime.date.today()
             available_slots = []
-            for timeslot in self.timeslots[index_of_start + 1 :]:
+            for timeslot in self.timeslots[index_of_start + 1:]:
                 diff = datetime.datetime.combine(_date_for_compare, timeslot) - datetime.datetime.combine(
                     _date_for_compare, start
                 )
@@ -74,6 +74,8 @@ class TimeRangeWidget(Keyboard):
     async def _render_keyboard(self, data: dict, manager: DialogManager) -> List[List[InlineKeyboardButton]]:
         # get chosen (only first and last) timeslots
         endpoint_timeslots = self.get_widget_data(manager, [])
+        endpoint_timeslots = list(map(lambda x: datetime.datetime.strptime(x, '%H:%M:%S').time(), endpoint_timeslots))
+        # print("endpoint timeslots", endpoint_timeslots)
         remaining_daily_hours = data["remaining_daily_hours"]
         available_timeslots = self.get_available_slots(endpoint_timeslots, remaining_daily_hours)
         daily_bookings: list[Booking] = data["daily_bookings"]
@@ -116,11 +118,11 @@ class TimeRangeWidget(Keyboard):
         return keyboard
 
     async def _process_item_callback(
-        self,
-        callback: CallbackQuery,
-        data: str,
-        dialog: DialogProtocol,
-        manager: DialogManager,
+            self,
+            callback: CallbackQuery,
+            data: str,
+            dialog: DialogProtocol,
+            manager: DialogManager,
     ) -> bool:
         """
         Process callback from item
@@ -135,7 +137,6 @@ class TimeRangeWidget(Keyboard):
             if widget_data:
                 self.set_widget_data(manager, [])
                 return True
-
         clicked_timeslot = datetime.time.fromisoformat(data)
 
         if clicked_timeslot in self.timeslots:
@@ -145,6 +146,9 @@ class TimeRangeWidget(Keyboard):
                 endpoint_timeslots.remove(clicked_timeslot)
             else:
                 endpoint_timeslots.append(clicked_timeslot)
+            for i in range(len(endpoint_timeslots)):
+                if isinstance(endpoint_timeslots[i], (datetime.time,)):
+                    endpoint_timeslots[i] = endpoint_timeslots[i].isoformat()
             self.set_widget_data(manager, endpoint_timeslots)
             return True
         return False
@@ -158,10 +162,10 @@ class TimeRangeWidget(Keyboard):
         return self.get_widget_data(manager, [])
 
     def __init__(
-        self,
-        timeslots: list[datetime.time] | Callable[..., list[datetime.time]],
-        id: Optional[str] = None,
-        when: WhenCondition = None,
+            self,
+            timeslots: list[datetime.time] | Callable[..., list[datetime.time]],
+            id: Optional[str] = None,
+            when: WhenCondition = None,
     ):
         super().__init__(id=id, when=when)
         self._timeslots = timeslots
