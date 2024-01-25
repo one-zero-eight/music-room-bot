@@ -50,6 +50,7 @@ class TimeRangeWidget(Keyboard):
                 )
                 if diff.total_seconds() / 3600 > hours:
                     break
+
                 available_slots.append(timeslot)
             return available_slots
         return []
@@ -87,7 +88,9 @@ class TimeRangeWidget(Keyboard):
         # render keyboard
         keyboard = []
 
-        for timeslot in self.timeslots:
+        timeslots = list(filter(lambda x: datetime.datetime.now().time() <= x, self.timeslots))
+
+        for timeslot in timeslots:
             time_text = timeslot.strftime("%H:%M")
 
             if timeslot in interactive_timeslots:

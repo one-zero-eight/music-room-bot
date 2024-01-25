@@ -4,10 +4,9 @@ from aiogram_dialog.widgets.kbd import Keyboard
 from aiogram_dialog.widgets.kbd.calendar_kbd import CalendarDaysView, CalendarUserConfig, next_month_begin, get_today, \
     empty_button, ManagedCalendar, CalendarScopeView, CallbackGenerator, CalendarConfig, DATE_TEXT, TODAY_TEXT, \
     WEEK_DAY_TEXT, DAYS_HEADER_TEXT, ZOOM_OUT_TEXT, NEXT_MONTH_TEXT, PREV_MONTH_TEXT, CALLBACK_PREFIX_YEAR, \
-    CALLBACK_PREFIX_MONTH, CalendarScope, CalendarData, BEARING_DATE, month_begin, CALLBACK_PREV_MONTH, \
-    CALLBACK_NEXT_MONTH, MONTH_TEXT, THIS_MONTH_TEXT, MONTHS_HEADER_TEXT, NEXT_YEAR_TEXT, PREV_YEAR_TEXT, \
-    CALLBACK_SCOPE_MONTHS, CALLBACK_SCOPE_YEARS, CALLBACK_NEXT_YEAR, CALLBACK_PREV_YEAR, THIS_YEAR_TEXT, YEAR_TEXT, \
-    NEXT_YEARS_PAGE_TEXT, PREV_YEARS_PAGE_TEXT, CALLBACK_PREV_YEARS_PAGE, CALLBACK_NEXT_YEARS_PAGE, OnDateSelected, \
+    CALLBACK_PREFIX_MONTH, CalendarScope, CalendarData, month_begin, CALLBACK_PREV_MONTH, \
+    CALLBACK_NEXT_MONTH, CALLBACK_SCOPE_MONTHS, CALLBACK_SCOPE_YEARS, CALLBACK_NEXT_YEAR, CALLBACK_PREV_YEAR, \
+    CALLBACK_PREV_YEARS_PAGE, CALLBACK_NEXT_YEARS_PAGE, OnDateSelected, \
     CalendarMonthView, CalendarYearsView
 
 from datetime import date, datetime, timedelta
