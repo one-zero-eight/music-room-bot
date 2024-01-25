@@ -76,7 +76,6 @@ class TimeRangeWidget(Keyboard):
         # get chosen (only first and last) timeslots
         endpoint_timeslots = self.get_widget_data(manager, [])
         endpoint_timeslots = list(map(lambda x: datetime.datetime.strptime(x, '%H:%M:%S').time(), endpoint_timeslots))
-        # print("endpoint timeslots", endpoint_timeslots)
         remaining_daily_hours = data["remaining_daily_hours"]
         available_timeslots = self.get_available_slots(endpoint_timeslots, remaining_daily_hours)
         daily_bookings: list[Booking] = data["daily_bookings"]
@@ -88,7 +87,13 @@ class TimeRangeWidget(Keyboard):
         # render keyboard
         keyboard = []
 
-        timeslots = list(filter(lambda x: datetime.datetime.now().time() <= x, self.timeslots))
+        selected_date_string: str = manager.dialog_data["selected_date"]
+        selected_date = datetime.datetime.strptime(selected_date_string, "%Y-%m-%d").date()
+        timeslots = self.timeslots
+
+        # do not show past timeslots
+        if selected_date == datetime.datetime.now().date():
+            timeslots = list(filter(lambda x: datetime.datetime.now().time() <= x, self.timeslots))
 
         for timeslot in timeslots:
             time_text = timeslot.strftime("%H:%M")
