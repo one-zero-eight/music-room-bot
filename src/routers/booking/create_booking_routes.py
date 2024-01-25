@@ -6,13 +6,14 @@ from aiogram.filters import Command
 from aiogram.fsm.state import any_state
 from aiogram.types import CallbackQuery, Message, User
 from aiogram_dialog import Dialog, DialogManager, Window, StartMode
-from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Group, Cancel, Row
+from aiogram_dialog.widgets.kbd import Back, Button, Group, Cancel, Row
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.api import client
 from src.routers.booking import router
 from src.routers.booking.states import CreateBookingStates
-from src.routers.booking.widgets import TimeRangeWidget
+from src.routers.booking.widgets.calendar import CustomCalendar
+from src.routers.booking.widgets.time_range import TimeRangeWidget
 
 
 @router.message(any_state, Command("create_booking"))
@@ -84,7 +85,7 @@ def generate_timeslots(start_time: datetime.time, end_time: datetime.time, inter
 
 date_selection = Window(
     Const("Please select a date:"),
-    Calendar(id="calendar", on_click=on_date_selected),
+    CustomCalendar(id="calendar", on_click=on_date_selected),
     Cancel(Const("❌")),
     state=CreateBookingStates.choose_date,
 )
