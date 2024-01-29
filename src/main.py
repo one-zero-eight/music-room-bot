@@ -46,14 +46,20 @@ class CustomDispatcher(Dispatcher):
 bot = Bot(token=os.getenv("TOKEN"))
 REDIS_URL = os.getenv("REDIS_URL")
 if REDIS_URL:
-    storage = RedisStorage.from_url(REDIS_URL, key_builder=DefaultKeyBuilder(with_destiny=True))
+    storage = RedisStorage.from_url(
+        REDIS_URL, key_builder=DefaultKeyBuilder(with_destiny=True)
+    )
     dp = CustomDispatcher(storage=storage)
 else:
     dp = CustomDispatcher(storage=MemoryStorage())
 
 
-@dp.error(ExceptionTypeFilter(UnknownIntent), F.update.callback_query.as_("callback_query"))
-async def unknown_intent_handler(event: ErrorEvent, callback_query: types.CallbackQuery):
+@dp.error(
+    ExceptionTypeFilter(UnknownIntent), F.update.callback_query.as_("callback_query")
+)
+async def unknown_intent_handler(
+    event: ErrorEvent, callback_query: types.CallbackQuery
+):
     await callback_query.answer("Unknown intent: Please, try to restart the action.")
 
 
@@ -61,14 +67,18 @@ async def unknown_intent_handler(event: ErrorEvent, callback_query: types.Callba
 async def start(message: types.Message):
     from src.routers.registration.keyboards import registration_kb
 
-    await message.answer("Welcome! To continue, you need to register.", reply_markup=registration_kb)
+    await message.answer(
+        "Welcome! To continue, you need to register.", reply_markup=registration_kb
+    )
 
 
 @dp.message(CommandStart(), RegisteredUserFilter())
 async def start_but_registered(message: types.Message):
     from src.menu import menu_kb
 
-    await message.answer("Welcome! Choose the action you're interested in.", reply_markup=menu_kb)
+    await message.answer(
+        "Welcome! Choose the action you're interested in.", reply_markup=menu_kb
+    )
 
 
 @dp.message(Command("help"))
@@ -93,7 +103,9 @@ async def help_handler(message: types.Message):
 async def menu_handler(message: types.Message):
     from src.menu import menu_kb
 
-    await message.answer("Choose the action you're interested in.", reply_markup=menu_kb)
+    await message.answer(
+        "Choose the action you're interested in.", reply_markup=menu_kb
+    )
 
 
 from src.routers import routers  # noqa: E402

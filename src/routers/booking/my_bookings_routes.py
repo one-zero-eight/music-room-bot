@@ -19,7 +19,10 @@ async def show_my_bookings(message: Message):
         await message.answer("You don't have active bookings.")
     else:
         bookings = [_get_pretty_datetime(entry) for entry in bookings]
-        await message.answer("Your active bookings:", reply_markup=await _create_inline_keyboard(bookings))
+        await message.answer(
+            "Your active bookings:",
+            reply_markup=await _create_inline_keyboard(bookings),
+        )
 
 
 async def _create_inline_keyboard(bookings: list[dict]):
@@ -30,10 +33,12 @@ async def _create_inline_keyboard(bookings: list[dict]):
         button2_text = "❌"
 
         button1 = types.InlineKeyboardButton(
-            text=button1_text, callback_data=MyBookingsCallbackData(id=booking["id"], key="none").pack()
+            text=button1_text,
+            callback_data=MyBookingsCallbackData(id=booking["id"], key="none").pack(),
         )
         button2 = types.InlineKeyboardButton(
-            text=button2_text, callback_data=MyBookingsCallbackData(id=booking["id"], key="cancel").pack()
+            text=button2_text,
+            callback_data=MyBookingsCallbackData(id=booking["id"], key="cancel").pack(),
         )
 
         keyboard.append([button1, button2])
@@ -42,7 +47,9 @@ async def _create_inline_keyboard(bookings: list[dict]):
 
 
 @router.callback_query(MyBookingsCallbackData.filter(F.key == "cancel"))
-async def handle_delete_callback(callback_query: types.CallbackQuery, callback_data: MyBookingsCallbackData):
+async def handle_delete_callback(
+    callback_query: types.CallbackQuery, callback_data: MyBookingsCallbackData
+):
     booking_id = callback_data.id
     response = await client.delete_booking(booking_id, callback_query.from_user.id)
     if response:
@@ -53,7 +60,10 @@ async def handle_delete_callback(callback_query: types.CallbackQuery, callback_d
             for j, button in enumerate(row):
                 if button.callback_data == callback_data.pack():
                     inline_keyboard[i][j] = types.InlineKeyboardButton(
-                        text="Cancelled", callback_data=MyBookingsCallbackData(id=booking_id, key="none").pack()
+                        text="Cancelled",
+                        callback_data=MyBookingsCallbackData(
+                            id=booking_id, key="none"
+                        ).pack(),
                     )
                     edited = True
                     break

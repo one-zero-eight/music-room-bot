@@ -9,7 +9,9 @@ from src.api import client
 class RegisteredUserFilter(Filter):
     _cache: ClassVar[Dict[int, int]] = {}
 
-    async def __call__(self, event: TelegramObject, event_from_user: User) -> Union[bool, Dict[str, Any]]:
+    async def __call__(
+        self, event: TelegramObject, event_from_user: User
+    ) -> Union[bool, Dict[str, Any]]:
         telegram_id = event_from_user.id
 
         if telegram_id in self._cache:

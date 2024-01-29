@@ -32,6 +32,3 @@ the [InNoHassle-MusicRoom](https://github.com/one-zero-eight/InNoHassle-MusicRoo
    ```
    docker-compose up --build
    ```
-
-   
-

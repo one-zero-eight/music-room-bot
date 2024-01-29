@@ -39,11 +39,16 @@ class InNoHassleMusicRoomAPI:
             params = {"email": email}
             async with session.post(url, params=params) as response:
                 if response.status == 400:
-                    return False, "A user with the provided email is already registered."
+                    return (
+                        False,
+                        "A user with the provided email is already registered.",
+                    )
                 if response.status == 200:
                     return True, None
 
-    async def validate_code(self, email: str, code: str, telegram_id: str) -> tuple[bool, Any]:
+    async def validate_code(
+        self, email: str, code: str, telegram_id: str
+    ) -> tuple[bool, Any]:
         async with self._create_session() as session:
             url = f"{self.api_root_path}/auth/validate_code"
             params = {"email": email, "code": code, "telegram_id": telegram_id}
@@ -82,7 +87,9 @@ class InNoHassleMusicRoomAPI:
                 if response.status == 200:
                     return response_json
 
-    async def fill_profile(self, telegram_id: int, name: str, alias: str, phone_number: str) -> tuple[bool, Any]:
+    async def fill_profile(
+        self, telegram_id: int, name: str, alias: str, phone_number: str
+    ) -> tuple[bool, Any]:
         url = f"{self.api_root_path}/participants/me/fill_profile"
         body = {
             "name": name,
@@ -100,9 +107,9 @@ class InNoHassleMusicRoomAPI:
                     return False, "There was an error during filling profile."
 
     async def get_remaining_daily_hours(
-            self,
-            telegram_id: int,
-            date: str,
+        self,
+        telegram_id: int,
+        date: str,
     ) -> Optional[float]:
         url = f"{self.api_root_path}/participants/me/remaining_daily_hours"
         params = {"date": date}
@@ -128,7 +135,11 @@ class InNoHassleMusicRoomAPI:
                     return False, None
 
     async def book(
-            self, telegram_id: int, date: datetime.date, time_start: datetime.time, time_end: datetime.time
+        self,
+        telegram_id: int,
+        date: datetime.date,
+        time_start: datetime.time,
+        time_end: datetime.time,
     ) -> tuple[bool, Any]:
         url = f"{self.api_root_path}/bookings/"
         params = {
@@ -182,7 +193,9 @@ class InNoHassleMusicRoomAPI:
             async with session.get(url) as response:
                 if response.status == 200:
                     bytes_ = await response.read()
-                    filename = response.headers["Content-Disposition"].split("filename=")[1]
+                    filename = response.headers["Content-Disposition"].split(
+                        "filename="
+                    )[1]
                     return bytes_, filename
 
 
