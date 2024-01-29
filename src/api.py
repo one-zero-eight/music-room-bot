@@ -46,9 +46,7 @@ class InNoHassleMusicRoomAPI:
                 if response.status == 200:
                     return True, None
 
-    async def validate_code(
-        self, email: str, code: str, telegram_id: str
-    ) -> tuple[bool, Any]:
+    async def validate_code(self, email: str, code: str, telegram_id: str) -> tuple[bool, Any]:
         async with self._create_session() as session:
             url = f"{self.api_root_path}/auth/validate_code"
             params = {"email": email, "code": code, "telegram_id": telegram_id}
@@ -87,9 +85,7 @@ class InNoHassleMusicRoomAPI:
                 if response.status == 200:
                     return response_json
 
-    async def fill_profile(
-        self, telegram_id: int, name: str, alias: str, phone_number: str
-    ) -> tuple[bool, Any]:
+    async def fill_profile(self, telegram_id: int, name: str, alias: str, phone_number: str) -> tuple[bool, Any]:
         url = f"{self.api_root_path}/participants/me/fill_profile"
         body = {
             "name": name,
@@ -193,9 +189,7 @@ class InNoHassleMusicRoomAPI:
             async with session.get(url) as response:
                 if response.status == 200:
                     bytes_ = await response.read()
-                    filename = response.headers["Content-Disposition"].split(
-                        "filename="
-                    )[1]
+                    filename = response.headers["Content-Disposition"].split("filename=")[1]
                     return bytes_, filename
 
 

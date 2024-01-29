@@ -117,10 +117,7 @@ class CustomCalendarDaysView(CalendarDaysView):
             for row_offset in range(7):
                 days_offset = timedelta(days=(offset + row_offset))
                 current_date = start_date + days_offset
-                if (
-                    min_date <= current_date <= max_date
-                    and current_date >= datetime.now().date()
-                ):
+                if min_date <= current_date <= max_date and current_date >= datetime.now().date():
                     row.append(
                         await self._render_date_button(
                             current_date,
@@ -183,15 +180,9 @@ class Calendar(Keyboard):
         create own implementation of views
         """
         return {
-            CalendarScope.DAYS: CustomCalendarDaysView(
-                self._item_callback_data, self.config
-            ),
-            CalendarScope.MONTHS: CalendarMonthView(
-                self._item_callback_data, self.config
-            ),
-            CalendarScope.YEARS: CalendarYearsView(
-                self._item_callback_data, self.config
-            ),
+            CalendarScope.DAYS: CustomCalendarDaysView(self._item_callback_data, self.config),
+            CalendarScope.MONTHS: CalendarMonthView(self._item_callback_data, self.config),
+            CalendarScope.YEARS: CalendarYearsView(self._item_callback_data, self.config),
         }
 
     async def _get_user_config(

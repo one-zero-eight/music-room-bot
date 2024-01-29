@@ -4,24 +4,18 @@ instructions_url = "https://bit.ly/inno-music-room"
 how_to_get_url = "https://www.youtube.com/watch?v=mGfdun8ah3g"
 tg_chat_url = "https://t.me/joinchat/DjhyZkBN-FmZStxTB40qwQ"
 bot_name = "Music Room Bot"
-bot_description = (
-    "Book a music room in the Innopolis Sport Complex. Made by @one_zero_eight"
-)
+bot_description = "Book a music room in the Innopolis Sport Complex. Made by @one_zero_eight"
 bot_commands = [
     types.BotCommand(command="/start", description="Start the bot (register)"),
     types.BotCommand(command="/menu", description="Open the menu"),
     types.BotCommand(command="/help", description="Get help"),
     types.BotCommand(command="/create_booking", description="Create a booking"),
     types.BotCommand(command="/my_bookings", description="Show your bookings"),
-    types.BotCommand(
-        command="/image_schedule", description="Show the image with bookings"
-    ),
+    types.BotCommand(command="/image_schedule", description="Show the image with bookings"),
 ]
 admin_commands = [
     types.BotCommand(command="/admin", description="Enable admin mode"),
-    types.BotCommand(
-        command="/export_participants", description="Export participants in docx format"
-    ),
+    types.BotCommand(command="/export_participants", description="Export participants in docx format"),
 ]
 
 rules_message = (

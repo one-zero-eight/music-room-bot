@@ -27,9 +27,7 @@ class TimeRangeWidget(Keyboard):
         """
         self.set_widget_data(manager, [])
 
-    def get_available_slots(
-        self, chosen: list[datetime.time], hours: float
-    ) -> list[datetime.time]:
+    def get_available_slots(self, chosen: list[datetime.time], hours: float) -> list[datetime.time]:
         """
         Get available timeslots
         :param chosen: list of chosen timeslots
@@ -47,9 +45,9 @@ class TimeRangeWidget(Keyboard):
             _date_for_compare = datetime.date.today()
             available_slots = []
             for timeslot in self.timeslots[index_of_start + 1 :]:
-                diff = datetime.datetime.combine(
-                    _date_for_compare, timeslot
-                ) - datetime.datetime.combine(_date_for_compare, start)
+                diff = datetime.datetime.combine(_date_for_compare, timeslot) - datetime.datetime.combine(
+                    _date_for_compare, start
+                )
                 if diff.total_seconds() / 3600 > hours:
                     break
 
@@ -57,9 +55,7 @@ class TimeRangeWidget(Keyboard):
             return available_slots
         return []
 
-    def get_already_booked_timeslots(
-        self, daily_bookings: list[Booking]
-    ) -> dict[datetime.time, Booking]:
+    def get_already_booked_timeslots(self, daily_bookings: list[Booking]) -> dict[datetime.time, Booking]:
         """
         Get already booked timeslots
         :param daily_bookings: list of daily bookings
@@ -76,9 +72,7 @@ class TimeRangeWidget(Keyboard):
                     break
         return already_booked_timeslots
 
-    async def _render_keyboard(
-        self, data: dict, manager: DialogManager
-    ) -> List[List[InlineKeyboardButton]]:
+    async def _render_keyboard(self, data: dict, manager: DialogManager) -> List[List[InlineKeyboardButton]]:
         # get chosen (only first and last) timeslots
         endpoint_timeslots = self.get_widget_data(manager, [])
         endpoint_timeslots = list(
@@ -88,9 +82,7 @@ class TimeRangeWidget(Keyboard):
             )
         )
         remaining_daily_hours = data["remaining_daily_hours"]
-        available_timeslots = self.get_available_slots(
-            endpoint_timeslots, remaining_daily_hours
-        )
+        available_timeslots = self.get_available_slots(endpoint_timeslots, remaining_daily_hours)
         daily_bookings: list[Booking] = data["daily_bookings"]
         already_booked_timeslots = self.get_already_booked_timeslots(daily_bookings)
         interactive_timeslots = set(available_timeslots) | set(endpoint_timeslots)
@@ -101,16 +93,12 @@ class TimeRangeWidget(Keyboard):
         keyboard = []
 
         selected_date_string: str = manager.dialog_data["selected_date"]
-        selected_date = datetime.datetime.strptime(
-            selected_date_string, "%Y-%m-%d"
-        ).date()
+        selected_date = datetime.datetime.strptime(selected_date_string, "%Y-%m-%d").date()
         timeslots = self.timeslots
 
         # do not show past timeslots
         if selected_date == datetime.datetime.now().date():
-            timeslots = list(
-                filter(lambda x: datetime.datetime.now().time() <= x, self.timeslots)
-            )
+            timeslots = list(filter(lambda x: datetime.datetime.now().time() <= x, self.timeslots))
 
         for timeslot in timeslots:
             time_text = timeslot.strftime("%H:%M")
@@ -133,17 +121,11 @@ class TimeRangeWidget(Keyboard):
                     booked_by_id = booking["participant_id"]
                     booked_by_alias = booking["participant_alias"]
                     if booked_by_id == manager.start_data["api_user_id"]:
-                        button = InlineKeyboardButton(
-                            text="🟢", callback_data=self._item_callback_data("None")
-                        )
+                        button = InlineKeyboardButton(text="🟢", callback_data=self._item_callback_data("None"))
                     else:
-                        button = InlineKeyboardButton(
-                            text="🔴", url=f"https://t.me/{booked_by_alias}"
-                        )
+                        button = InlineKeyboardButton(text="🔴", url=f"https://t.me/{booked_by_alias}")
                 else:
-                    button = InlineKeyboardButton(
-                        text=" ", callback_data=self._item_callback_data("None")
-                    )
+                    button = InlineKeyboardButton(text=" ", callback_data=self._item_callback_data("None"))
 
             keyboard.append([button])
         return keyboard

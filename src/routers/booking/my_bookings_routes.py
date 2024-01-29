@@ -47,9 +47,7 @@ async def _create_inline_keyboard(bookings: list[dict]):
 
 
 @router.callback_query(MyBookingsCallbackData.filter(F.key == "cancel"))
-async def handle_delete_callback(
-    callback_query: types.CallbackQuery, callback_data: MyBookingsCallbackData
-):
+async def handle_delete_callback(callback_query: types.CallbackQuery, callback_data: MyBookingsCallbackData):
     booking_id = callback_data.id
     response = await client.delete_booking(booking_id, callback_query.from_user.id)
     if response:
@@ -61,9 +59,7 @@ async def handle_delete_callback(
                 if button.callback_data == callback_data.pack():
                     inline_keyboard[i][j] = types.InlineKeyboardButton(
                         text="Cancelled",
-                        callback_data=MyBookingsCallbackData(
-                            id=booking_id, key="none"
-                        ).pack(),
+                        callback_data=MyBookingsCallbackData(id=booking_id, key="none").pack(),
                     )
                     edited = True
                     break

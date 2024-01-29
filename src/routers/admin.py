@@ -19,9 +19,7 @@ class StatusFilter(Filter):
     def __init__(self, status: Optional[ParticipantStatus] = None):
         self._status = status
 
-    async def __call__(
-        self, event: TelegramObject, event_from_user: User
-    ) -> Union[bool, Dict[str, Any]]:
+    async def __call__(self, event: TelegramObject, event_from_user: User) -> Union[bool, Dict[str, Any]]:
         telegram_id = event_from_user.id
         user = await client.get_me(telegram_id=telegram_id)
         if self._status is None:
@@ -46,9 +44,7 @@ async def enable_admin_mode(message: types.Message, bot: Bot, status: str):
             scope=BotCommandScopeChat(chat_id=message.from_user.id),
         )
     else:
-        await bot.set_my_commands(
-            bot_commands, scope=BotCommandScopeChat(chat_id=message.from_user.id)
-        )
+        await bot.set_my_commands(bot_commands, scope=BotCommandScopeChat(chat_id=message.from_user.id))
 
 
 @router.message(Command("export_participants"), StatusFilter(ParticipantStatus.LORD))
@@ -57,8 +53,6 @@ async def export_participants(message: types.Message):
     if response:
         bytes_, filename = response
         document = BufferedInputFile(bytes_, filename)
-        await message.answer_document(
-            document, caption="Here is the list of participants."
-        )
+        await message.answer_document(document, caption="Here is the list of participants.")
     else:
         await message.answer("You don't have access to this command.")

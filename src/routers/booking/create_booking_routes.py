@@ -18,9 +18,7 @@ from src.routers.booking.widgets.time_range import TimeRangeWidget
 
 @router.message(any_state, Command("create_booking"))
 @router.message(any_state, F.text == "Create a booking")
-async def start_booking(
-    _message: Message, dialog_manager: DialogManager, api_user_id: int
-):
+async def start_booking(_message: Message, dialog_manager: DialogManager, api_user_id: int):
     await dialog_manager.start(
         CreateBookingStates.choose_date,
         mode=StartMode.NEW_STACK,
@@ -38,9 +36,7 @@ async def on_date_selected(
     await dialog_manager.next()
 
 
-async def on_time_confirmed(
-    callback: CallbackQuery, _button: Button, dialog_manager: DialogManager
-):
+async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_manager: DialogManager):
     date_string: str = dialog_manager.dialog_data["selected_date"]
     date: datetime.datetime = datetime.datetime.fromisoformat(date_string)
 
@@ -68,16 +64,12 @@ async def on_time_confirmed(
         await dialog_manager.switch_to(CreateBookingStates.choose_date)
 
 
-async def clear_selection(
-    callback: CallbackQuery, _button: Button, dialog_manager: DialogManager
-):
+async def clear_selection(callback: CallbackQuery, _button: Button, dialog_manager: DialogManager):
     widget = dialog_manager.find("time_selection")
     widget.reset(dialog_manager)
 
 
-def generate_timeslots(
-    start_time: datetime.time, end_time: datetime.time, interval: int
-) -> list[datetime.time]:
+def generate_timeslots(start_time: datetime.time, end_time: datetime.time, interval: int) -> list[datetime.time]:
     """
     Generate timeslots from start_time to end_time with interval
     :param start_time: start time
@@ -90,8 +82,7 @@ def generate_timeslots(
     while current_time <= end_time:
         timeslots.append(current_time)
         current_time = (
-            datetime.datetime.combine(datetime.datetime.today(), current_time)
-            + datetime.timedelta(minutes=interval)
+            datetime.datetime.combine(datetime.datetime.today(), current_time) + datetime.timedelta(minutes=interval)
         ).time()
     return timeslots
 
@@ -109,9 +100,7 @@ time_selection_widget = TimeRangeWidget(
 )
 
 
-async def getter_for_time_selection(
-    dialog_manager: DialogManager, event_from_user: User, **_kwargs
-) -> dict:
+async def getter_for_time_selection(dialog_manager: DialogManager, event_from_user: User, **_kwargs) -> dict:
     dialog_data: dict = dialog_manager.dialog_data
     participant_id = dialog_manager.start_data["api_user_id"]
     date: str = dialog_data["selected_date"]
@@ -119,9 +108,7 @@ async def getter_for_time_selection(
     hours = await client.get_remaining_daily_hours(event_from_user.id, date)
     data["remaining_daily_hours"] = hours
     data["remaining_daily_hours_hours"] = int(hours)
-    data["remaining_daily_hours_minutes"] = int(
-        (hours - data["remaining_daily_hours_hours"]) * 60
-    )
+    data["remaining_daily_hours_minutes"] = int((hours - data["remaining_daily_hours_hours"]) * 60)
     _, data["daily_bookings"] = await client.get_daily_bookings(date)
     return data
 
