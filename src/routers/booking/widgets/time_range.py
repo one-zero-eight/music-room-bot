@@ -145,8 +145,10 @@ class TimeRangeWidget(Keyboard):
         :param manager: dialog manager
         :return: True if processed
         """
+        widget_data = self.get_widget_data(manager, [])
+        if len(widget_data) != 0 and data == widget_data[0][:5]:
+            return False
         if data == "None":
-            widget_data = self.get_widget_data(manager, [])
             if widget_data:
                 self.set_widget_data(manager, [])
                 return True
