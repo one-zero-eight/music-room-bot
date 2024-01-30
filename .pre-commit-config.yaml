@@ -19,15 +19,15 @@ repos:
         args: [ --fix, --exit-zero, --show-fixes ]
         name: "ruff: fixing"
 
-  # Reformat Python files with Black
-  - repo: https://github.com/psf/black
-    rev: 23.9.1
+  # Format with Ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.0.292
     hooks:
-      - id: black
-        name: "black: formatting"
-        args: [--line-length=120]
+      - id: ruff
+        args: [ --fix, --exit-zero, --show-fixes ]
+        name: "ruff: format"
 
-  # Lint Python files with Ruff
+  # Lint with Ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.0.292
     hooks:
