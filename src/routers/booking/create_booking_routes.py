@@ -53,9 +53,7 @@ async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_man
     if success:
         date_text = date.strftime("%B %d")
         timeslot_text = f"{start.isoformat(timespec='minutes')} - {end.isoformat(timespec='minutes')}"
-        text = (
-            f"You have successfully booked on <b>{date_text}, {timeslot_text}</b>."
-        )
+        text = f"You have successfully booked on <b>{date_text}, {timeslot_text}</b>."
         await callback.message.answer(text, parse_mode="HTML")
         await dialog_manager.done()
     else:

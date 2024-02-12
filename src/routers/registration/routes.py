@@ -44,9 +44,7 @@ async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMC
 @router.callback_query(RegistrationCallbackData.filter(F.key == "register"), RegisteredUserFilter())
 async def user_want_to_register_but_registered(callback_query: types.CallbackQuery):
     await callback_query.bot.send_message(
-        chat_id=callback_query.from_user.id,
-        text="You're already registered.",
-        reply_markup=menu_kb,
+        chat_id=callback_query.from_user.id, text="You're already registered.", reply_markup=menu_kb
     )
 
 
