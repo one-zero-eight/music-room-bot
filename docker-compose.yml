@@ -5,9 +5,12 @@ services:
     build:
       dockerfile: ./deploy/Dockerfile
       context: .
+    depends_on:
+      - redis
     restart: always
     env_file: .env
     networks:
+      - default
       - music-room
 
   redis:
@@ -15,12 +18,11 @@ services:
     restart: always
     volumes:
       - redis:/data
-    networks:
-      - music-room
 
 networks:
   music-room:
     external: true
+    name: music-room
 
 volumes:
   redis:
