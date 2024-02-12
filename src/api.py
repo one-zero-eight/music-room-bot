@@ -66,6 +66,15 @@ class InNoHassleMusicRoomAPI:
                 user_exists = json.loads(response_text)
                 return user_exists
 
+    async def is_need_to_fill_profile(self, telegram_id: int) -> bool:
+        async with self._create_session() as session:
+            url = f"{self.api_root_path}/auth/is_need_to_fill_profile"
+            params = {"telegram_id": str(telegram_id)}
+            async with session.get(url, params=params) as response:
+                response_text = await response.text()
+                need_to_fill_profile = json.loads(response_text)
+                return need_to_fill_profile
+
     async def get_participant_id(self, telegram_id: int) -> Optional[int]:
         url = f"{self.api_root_path}/participants/participant_id"
         params = {"telegram_id": str(telegram_id)}

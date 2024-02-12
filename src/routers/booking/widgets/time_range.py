@@ -118,9 +118,8 @@ class TimeRangeWidget(Keyboard):
             else:
                 if timeslot in already_booked_timeslots:
                     booking = already_booked_timeslots[timeslot]
-                    booked_by_id = booking["participant_id"]
                     booked_by_alias = booking["participant_alias"]
-                    if booked_by_id == manager.start_data["api_user_id"]:
+                    if booked_by_alias == manager.event.from_user.username:
                         button = InlineKeyboardButton(text="🟢", callback_data=self._item_callback_data("None"))
                     else:
                         button = InlineKeyboardButton(text="🔴", url=f"https://t.me/{booked_by_alias}")
@@ -152,6 +151,7 @@ class TimeRangeWidget(Keyboard):
             if widget_data:
                 self.set_widget_data(manager, [])
                 return True
+            return False
         clicked_timeslot = datetime.time.fromisoformat(data)
 
         if clicked_timeslot in self.timeslots:

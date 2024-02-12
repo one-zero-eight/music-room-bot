@@ -6,11 +6,11 @@ from aiogram.types import BufferedInputFile, TelegramObject, User, BotCommandSco
 
 from src.api import client, ParticipantStatus
 from src.constants import admin_commands, bot_commands
-from src.filters import RegisteredUserFilter
+from src.filters import FilledProfileFilter
 
 router = Router()
 
-router.message.filter(RegisteredUserFilter())
+router.message.filter(FilledProfileFilter())
 
 
 class StatusFilter(Filter):

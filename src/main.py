@@ -23,7 +23,7 @@ from src.constants import (
     bot_short_description,
     bot_commands,
 )
-from src.filters import RegisteredUserFilter
+from src.filters import RegisteredUserFilter, FilledProfileFilter
 
 load_dotenv(find_dotenv())
 
@@ -65,7 +65,7 @@ async def start(message: types.Message):
     await message.answer("Welcome! To continue, you need to register.", reply_markup=registration_kb)
 
 
-@dp.message(CommandStart(), RegisteredUserFilter())
+@dp.message(CommandStart(), FilledProfileFilter())
 async def start_but_registered(message: types.Message):
     from src.menu import menu_kb
 
@@ -90,7 +90,7 @@ async def help_handler(message: types.Message):
     )
 
 
-@dp.message(Command("menu"), RegisteredUserFilter())
+@dp.message(Command("menu"), FilledProfileFilter())
 async def menu_handler(message: types.Message):
     from src.menu import menu_kb
 

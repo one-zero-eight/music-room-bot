@@ -8,10 +8,10 @@ from aiogram.fsm.state import any_state
 from aiogram.types import BufferedInputFile
 
 from src.api import client
-from src.filters import RegisteredUserFilter
+from src.filters import FilledProfileFilter
 
 router = Router()
-router.message.filter(RegisteredUserFilter())
+router.message.filter(FilledProfileFilter())
 
 
 class ImageScheduleCallbackData(CallbackData, prefix="schedule"):

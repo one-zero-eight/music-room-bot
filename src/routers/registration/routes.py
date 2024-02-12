@@ -2,6 +2,7 @@ import asyncio
 import time
 
 from aiogram import F, types, Bot
+from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
@@ -13,7 +14,7 @@ from src.constants import (
     how_to_get_url,
     tg_chat_url,
 )
-from src.filters import RegisteredUserFilter
+from src.filters import RegisteredUserFilter, FilledProfileFilter
 from src.menu import menu_kb
 from src.routers.registration import router
 from src.routers.registration.keyboards import (
@@ -23,7 +24,7 @@ from src.routers.registration.keyboards import (
     resend_code_kb,
     are_equal_keyboards,
 )
-from src.routers.registration.states import RegistrationStates
+from src.routers.registration.states import RegistrationStates, RefillProfileStates
 from src.routers.registration.utils import is_cyrillic
 
 
@@ -190,3 +191,57 @@ async def confirm_rules(message: Message, state: FSMContext):
         await state.clear()
     else:
         await message.answer("You haven't confirmed the rules. Please, try again.")
+
+
+# Refill profile name and phone number
+@router.message(
+    RegisteredUserFilter(),
+    ~FilledProfileFilter(),
+    ~Command("refill_profile"),
+    ~StateFilter(RefillProfileStates),
+)
+async def need_to_fill_profile(message: Message, state: FSMContext):
+    await message.answer(
+        "You need to fill out your profile to use the music room. If you want to continue, click /refill_profile."
+    )
+
+
+@router.message(Command("refill_profile"), RegisteredUserFilter())
+async def refill_profile(message: Message, state: FSMContext):
+    await message.answer(
+        "Please, enter your fullname <b>in Russian</b>. <i>\nExample: Петров Иван Иванович</i>",
+        parse_mode="HTML",
+    )
+    await state.set_state(RefillProfileStates.name_requested)
+
+
+@router.message(RefillProfileStates.name_requested, RegisteredUserFilter())
+async def refill_profile_name(message: Message, state: FSMContext):
+    if not await is_cyrillic(message.text):
+        await message.answer(
+            "Please, enter a valid fullname <b>in Russian</b>. <i>\nExample: Петров Иван Иванович</i>",
+            parse_mode="HTML",
+        )
+    else:
+        await state.update_data(name=message.text)
+        await message.answer(text="Please provide access to your phone number.", reply_markup=phone_request_kb)
+        await state.set_state(RefillProfileStates.phone_number_requested)
+
+
+@router.message(RefillProfileStates.phone_number_requested, F.contact, RegisteredUserFilter())
+async def refill_profile_phone_number(message: Message, state: FSMContext):
+    phone_number = message.contact.phone_number
+    await state.update_data(phone_number=phone_number)
+    user_data = await state.get_data()
+    success, error = await client.fill_profile(
+        telegram_id=message.from_user.id,
+        name=user_data.get("name"),
+        alias=message.from_user.username,
+        phone_number=user_data.get("phone_number"),
+    )
+
+    if not success:
+        await message.answer(error)
+    else:
+        await message.answer("Your profile has been successfully updated.", reply_markup=menu_kb)
+        await state.clear()

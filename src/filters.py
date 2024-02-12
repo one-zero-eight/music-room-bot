@@ -20,3 +20,20 @@ class RegisteredUserFilter(Filter):
         else:
             return False
         return {"api_user_id": api_user_id}
+
+
+class FilledProfileFilter(Filter):
+    _cache: ClassVar[Dict[int, bool]] = {}
+
+    async def __call__(self, event: TelegramObject, event_from_user: User) -> bool:
+        telegram_id = event_from_user.id
+
+        if telegram_id in self._cache:
+            filled_profile = self._cache[telegram_id]
+            if filled_profile:
+                return True
+
+        need_to_fill_profile = await client.is_need_to_fill_profile(telegram_id)
+        filled_profile = not need_to_fill_profile
+        self._cache[telegram_id] = filled_profile
+        return filled_profile

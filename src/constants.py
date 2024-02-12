@@ -13,6 +13,7 @@ bot_commands = [
     types.BotCommand(command="/create_booking", description="Create a booking"),
     types.BotCommand(command="/my_bookings", description="Show your bookings"),
     types.BotCommand(command="/image_schedule", description="Show the image with bookings"),
+    types.BotCommand(command="/refill_profile", description="Refill your profile (name and phone number)"),
 ]
 admin_commands = [
     types.BotCommand(command="/admin", description="Enable admin mode"),
