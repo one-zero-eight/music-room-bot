@@ -13,7 +13,7 @@ jobs:
     runs-on: self-hosted
     environment:
       name: production
-      url: https://t.me/Inno108MusicRoomBot
+      url: https://t.me/InnoMusicRoomBot
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
