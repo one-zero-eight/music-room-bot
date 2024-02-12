@@ -27,10 +27,10 @@ async def start_booking(_message: Message, dialog_manager: DialogManager, api_us
 
 
 async def on_date_selected(
-    _callback: CallbackQuery,
-    _widget,
-    dialog_manager: DialogManager,
-    selected_date: datetime.date,
+        _callback: CallbackQuery,
+        _widget,
+        dialog_manager: DialogManager,
+        selected_date: datetime.date,
 ):
     dialog_manager.dialog_data["selected_date"] = selected_date.isoformat()
     await dialog_manager.next()
@@ -54,7 +54,8 @@ async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_man
     if success:
         date_text = date.strftime("%B %d")
         timeslot_text = f"{start.isoformat(timespec='minutes')} - {end.isoformat(timespec='minutes')}"
-        text = f"You have successfully booked on <b>{date_text}, {timeslot_text}</b>"
+        text = (f"You have successfully booked on <b>{date_text}, {timeslot_text}</b>.\n"
+                f"<i>Note that, access to the SC will appear after submitting the list of participants (usually on Monday).</i>")
         await callback.message.answer(text, parse_mode="HTML")
         await dialog_manager.done()
     else:
@@ -82,7 +83,8 @@ def generate_timeslots(start_time: datetime.time, end_time: datetime.time, inter
     while current_time <= end_time:
         timeslots.append(current_time)
         current_time = (
-            datetime.datetime.combine(datetime.datetime.today(), current_time) + datetime.timedelta(minutes=interval)
+                datetime.datetime.combine(datetime.datetime.today(), current_time) + datetime.timedelta(
+            minutes=interval)
         ).time()
     return timeslots
 
