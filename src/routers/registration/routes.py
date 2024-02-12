@@ -33,7 +33,10 @@ async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMC
     await callback_query.answer()
     await callback_query.bot.send_message(
         chat_id=callback_query.from_user.id,
-        text="Enter your email. You will receive a one-time code for registration.",
+        text=(
+            "Enter your email. You will receive a one-time code for registration.\n\n"
+            "Preferably <code>@innopolis.university</code> or <code>@innopolis.ru</code>."
+        ),
     )
     await state.set_state(RegistrationStates.email_requested)
 
@@ -171,7 +174,13 @@ async def request_name(message: Message, state: FSMContext):
 @router.message(RegistrationStates.rules_confirmation_requested)
 async def confirm_rules(message: Message, state: FSMContext):
     if message.text[:100] == rules_confirmation_message.format(name=(await state.get_data()))[:100]:
-        await message.answer("You have successfully registered.", reply_markup=menu_kb)
+        text = (
+            "You have successfully registered.\n\n"
+            "❗️ Access to the Sports Complex will appear after submitting the list of participants (usually on "
+            "Monday)."
+        )
+
+        await message.answer(text, reply_markup=menu_kb, parse_mode="HTML")
 
         keyboard = types.InlineKeyboardMarkup(
             inline_keyboard=[
