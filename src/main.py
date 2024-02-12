@@ -20,6 +20,7 @@ from src.constants import (
     tg_chat_url,
     bot_name,
     bot_description,
+    bot_short_description,
     bot_commands,
 )
 from src.filters import RegisteredUserFilter
@@ -108,13 +109,16 @@ async def main():
     existing_bot = {
         "name": (await bot.get_my_name()).name,
         "description": (await bot.get_my_description()).description,
+        "shortDescription": (await bot.get_my_short_description()).short_description,
         "commands": await bot.get_my_commands(),
     }
 
     if existing_bot["name"] != bot_name:
         await bot.set_my_name(bot_name)
     if existing_bot["description"] != bot_description:
-        await bot.set_my_short_description(bot_description)
+        await bot.set_my_description(bot_description)
+    if existing_bot["shortDescription"] != bot_short_description:
+        await bot.set_my_short_description(bot_short_description)
     if existing_bot["commands"] != bot_commands:
         await bot.set_my_commands(bot_commands)
     # Drop pending updates
