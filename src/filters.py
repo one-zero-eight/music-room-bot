@@ -34,6 +34,8 @@ class FilledProfileFilter(Filter):
                 return True
 
         need_to_fill_profile = await client.is_need_to_fill_profile(telegram_id)
+        if need_to_fill_profile is None:
+            return False
         filled_profile = not need_to_fill_profile
         self._cache[telegram_id] = filled_profile
         return filled_profile

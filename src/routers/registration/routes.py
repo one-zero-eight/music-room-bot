@@ -37,6 +37,7 @@ async def user_want_to_register(callback_query: types.CallbackQuery, state: FSMC
             "Enter your email. You will receive a one-time code for registration.\n\n"
             "Preferably <code>@innopolis.university</code> or <code>@innopolis.ru</code>."
         ),
+        parse_mode="HTML",
     )
     await state.set_state(RegistrationStates.email_requested)
 
