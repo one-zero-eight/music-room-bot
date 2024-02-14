@@ -45,9 +45,11 @@ class TimeRangeWidget(Keyboard):
 
         return timepoints[start_index:until_excluding]
 
-    def get_already_booked_timepoints(self, daily_bookings: list[Booking]) -> dict[datetime.time, Booking]:
+    def get_already_booked_timepoints(
+        self, daily_bookings: list[Booking], reverse: bool = False
+    ) -> dict[datetime.time, Booking]:
         already_booked_timepoints: dict[datetime.time, Booking] = {}
-        for timeslot in self.timepoints:
+        for timeslot in self.timepoints[::-1] if reverse else self.timepoints:
             for booking in daily_bookings:
                 time_start = datetime.datetime.fromisoformat(booking["time_start"])
                 time_end = datetime.datetime.fromisoformat(booking["time_end"])
@@ -84,19 +86,21 @@ class TimeRangeWidget(Keyboard):
         endpoint_time_selected = self.get_selected_time_points(manager)
         remaining_daily_hours = data["remaining_daily_hours"]
         daily_bookings: list[Booking] = data["daily_bookings"]
-        already_booked_timepoints = self.get_already_booked_timepoints(daily_bookings)
 
         if len(endpoint_time_selected) == 0:
             # first click (select start time of booking)
+            already_booked_timepoints = self.get_already_booked_timepoints(daily_bookings)
             available_timepoints_to_select = self.get_all_time_points() if remaining_daily_hours else []
             blocked_timepoints = self.get_blocked_timepoints(None, daily_bookings)
         elif len(endpoint_time_selected) == 1:
             # second click (select end time of booking)
             start_time = endpoint_time_selected[0]
+            already_booked_timepoints = self.get_already_booked_timepoints(daily_bookings, reverse=True)
             available_timepoints_to_select = self.get_end_time_points(start_time, remaining_daily_hours)
             blocked_timepoints = self.get_blocked_timepoints(start_time, daily_bookings)
         elif len(endpoint_time_selected) == 2:
             # third click (remove end time of booking)
+            already_booked_timepoints = self.get_already_booked_timepoints(daily_bookings, reverse=True)
             available_timepoints_to_select = []
             blocked_timepoints = []
         else:
