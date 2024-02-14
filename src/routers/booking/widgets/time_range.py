@@ -49,12 +49,15 @@ class TimeRangeWidget(Keyboard):
         self, daily_bookings: list[Booking], reverse: bool = False
     ) -> dict[datetime.time, Booking]:
         already_booked_timepoints: dict[datetime.time, Booking] = {}
-        for timeslot in self.timepoints[::-1] if reverse else self.timepoints:
+        for timeslot in self.timepoints:
             for booking in daily_bookings:
                 time_start = datetime.datetime.fromisoformat(booking["time_start"])
                 time_end = datetime.datetime.fromisoformat(booking["time_end"])
 
-                if time_start.time() <= timeslot <= time_end.time():
+                if not reverse and time_start.time() <= timeslot < time_end.time():
+                    already_booked_timepoints[timeslot] = booking
+                    break
+                if reverse and time_start.time() < timeslot <= time_end.time():
                     already_booked_timepoints[timeslot] = booking
                     break
         return already_booked_timepoints
