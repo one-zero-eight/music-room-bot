@@ -47,6 +47,10 @@ resend_code_kb = types.InlineKeyboardMarkup(
     ]
 )
 
+innomail_kb = types.InlineKeyboardMarkup(
+    inline_keyboard=[[types.InlineKeyboardButton(text="Open Innopolis Mail", url="https://mail.innopolis.ru")]],
+)
+
 
 def are_equal_keyboards(self: types.InlineKeyboardMarkup, other: types.InlineKeyboardMarkup) -> bool:
     return self.model_dump() == other.model_dump()

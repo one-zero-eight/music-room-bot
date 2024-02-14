@@ -23,6 +23,7 @@ from src.routers.registration.keyboards import (
     confirm_email_kb,
     resend_code_kb,
     are_equal_keyboards,
+    innomail_kb,
 )
 from src.routers.registration.states import RegistrationStates, RefillProfileStates
 from src.routers.registration.utils import is_cyrillic
@@ -80,7 +81,13 @@ async def send_code(callback: types.CallbackQuery, state: FSMContext):
         if not success:
             await callback.message.answer(error)
         else:
-            await callback.message.answer("We sent a one-time code on your email. Please, enter it.")
+            if "@innopolis.university" in email or "@innopolis.ru" in email:
+                await callback.message.answer(
+                    "We sent a one-time code on your email. Please, enter it.", reply_markup=innomail_kb
+                )
+            else:
+                await callback.message.answer("We sent a one-time code on your email. Please, enter it.")
+
             await state.set_state(RegistrationStates.code_requested)
         await state.update_data(last_click=time.time())
         await callback.answer()
