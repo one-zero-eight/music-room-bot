@@ -129,6 +129,17 @@ class InNoHassleMusicRoomAPI:
                 remaining_daily_hours = float(await response.text())
         return remaining_daily_hours
 
+    async def get_remaining_weekly_hours(self, telegram_id: int, date: str) -> Optional[float]:
+        url = f"{self.api_root_path}/participants/me/remaining_weekly_hours"
+        params = {"date": date}
+        async with self._create_session() as session:
+            self._auth_session(session, telegram_id)
+            async with session.get(url, params=params) as response:
+                if response.status != 200:
+                    return None
+                remaining_weekly_hours = float(await response.text())
+        return remaining_weekly_hours
+
     async def get_daily_bookings(self, date: Optional[str]) -> tuple[bool, Any]:
         async with self._create_session() as session:
             url = f"{self.api_root_path}/bookings/daily_bookings"

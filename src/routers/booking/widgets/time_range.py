@@ -1,7 +1,8 @@
 import datetime
-from typing import List, Callable, Optional, TypedDict
+from typing import List, Callable, Optional, TypedDict, assert_never
 
 from aiogram.types import InlineKeyboardButton, CallbackQuery
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram_dialog import DialogManager, DialogProtocol
 from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.kbd import Keyboard
@@ -21,113 +22,134 @@ class TimeRangeWidget(Keyboard):
     """
 
     def reset(self, manager: DialogManager):
-        """
-        Reset widget data
-        :param manager: dialog manager
-        """
         self.set_widget_data(manager, [])
 
-    def get_available_slots(self, chosen: list[datetime.time], hours: float) -> list[datetime.time]:
-        """
-        Get available timeslots
-        :param chosen: list of chosen timeslots
-        :param max_count: max number of chosen timeslots
-        :return: list of available timeslots
-        """
+    def get_all_time_points(self) -> list[datetime.time]:
+        return self.timepoints
 
+    def get_end_time_points(self, start_time: datetime.time, hours: float) -> list[datetime.time]:
         if hours <= 0:
             return []
-        if len(chosen) == 0:
-            return self.timeslots
-        elif len(chosen) == 1:
-            start = chosen[0]
-            index_of_start = self.timeslots.index(chosen[0])
-            _date_for_compare = datetime.date.today()
-            available_slots = []
-            for timeslot in self.timeslots[index_of_start + 1 :]:
-                diff = datetime.datetime.combine(_date_for_compare, timeslot) - datetime.datetime.combine(
-                    _date_for_compare, start
-                )
-                if diff.total_seconds() / 3600 > hours:
-                    break
 
-                available_slots.append(timeslot)
-            return available_slots
-        return []
+        timepoints = self.get_all_time_points()
+        start_index = timepoints.index(start_time)
+        _date = datetime.datetime.now().date()
+        start_datetime = datetime.datetime.combine(_date, start_time)
+        until_excluding = len(timepoints)
 
-    def get_already_booked_timeslots(self, daily_bookings: list[Booking]) -> dict[datetime.time, Booking]:
-        """
-        Get already booked timeslots
-        :param daily_bookings: list of daily bookings
-        :return: list of already booked timeslots
-        """
-        already_booked_timeslots: dict[datetime.time, Booking] = {}
-        for timeslot in self.timeslots:
+        for i in range(start_index, len(timepoints)):
+            diff = datetime.datetime.combine(_date, timepoints[i]) - start_datetime
+            if diff.total_seconds() / 3600 > hours:
+                until_excluding = i
+                break
+
+        return timepoints[start_index:until_excluding]
+
+    def get_already_booked_timepoints(self, daily_bookings: list[Booking]) -> dict[datetime.time, Booking]:
+        already_booked_timepoints: dict[datetime.time, Booking] = {}
+        for timeslot in self.timepoints:
             for booking in daily_bookings:
                 time_start = datetime.datetime.fromisoformat(booking["time_start"])
                 time_end = datetime.datetime.fromisoformat(booking["time_end"])
 
                 if time_start.time() <= timeslot <= time_end.time():
-                    already_booked_timeslots[timeslot] = booking
+                    already_booked_timepoints[timeslot] = booking
                     break
-        return already_booked_timeslots
+        return already_booked_timepoints
+
+    def get_blocked_timepoints(
+        self, selected_time: datetime.time | None, daily_bookings: list[Booking]
+    ) -> list[datetime.time]:
+        blocked_timepoints = []
+
+        for i, timepoint in enumerate(self.timepoints):
+            for booking in daily_bookings:
+                booking_start_time = datetime.datetime.fromisoformat(booking["time_start"]).time()
+                booking_end_time = datetime.datetime.fromisoformat(booking["time_end"]).time()
+                if selected_time is None:
+                    if booking_start_time <= timepoint < booking_end_time:
+                        blocked_timepoints.append(timepoint)
+                        break
+                elif not (
+                    (booking_start_time < selected_time and booking_end_time <= selected_time)
+                    or (booking_start_time >= timepoint and booking_end_time > timepoint)
+                ):
+                    blocked_timepoints.append(timepoint)
+                    break
+
+        return blocked_timepoints
 
     async def _render_keyboard(self, data: dict, manager: DialogManager) -> List[List[InlineKeyboardButton]]:
         # get chosen (only first and last) timeslots
-        endpoint_timeslots = self.get_widget_data(manager, [])
-        endpoint_timeslots = list(
-            map(
-                lambda x: datetime.datetime.strptime(x, "%H:%M:%S").time(),
-                endpoint_timeslots,
-            )
-        )
+        endpoint_time_selected = self.get_selected_time_points(manager)
         remaining_daily_hours = data["remaining_daily_hours"]
-        available_timeslots = self.get_available_slots(endpoint_timeslots, remaining_daily_hours)
         daily_bookings: list[Booking] = data["daily_bookings"]
-        already_booked_timeslots = self.get_already_booked_timeslots(daily_bookings)
-        interactive_timeslots = set(available_timeslots) | set(endpoint_timeslots)
-        for timeslot in already_booked_timeslots:
-            if timeslot in interactive_timeslots:
-                interactive_timeslots.remove(timeslot)
+        already_booked_timepoints = self.get_already_booked_timepoints(daily_bookings)
+
+        if len(endpoint_time_selected) == 0:
+            # first click (select start time of booking)
+            available_timepoints_to_select = self.get_all_time_points() if remaining_daily_hours else []
+            blocked_timepoints = self.get_blocked_timepoints(None, daily_bookings)
+        elif len(endpoint_time_selected) == 1:
+            # second click (select end time of booking)
+            start_time = endpoint_time_selected[0]
+            available_timepoints_to_select = self.get_end_time_points(start_time, remaining_daily_hours)
+            blocked_timepoints = self.get_blocked_timepoints(start_time, daily_bookings)
+        elif len(endpoint_time_selected) == 2:
+            # third click (remove end time of booking)
+            available_timepoints_to_select = []
+            blocked_timepoints = []
+        else:
+            assert_never(endpoint_time_selected)
+
         # render keyboard
-        keyboard = []
+        keyboard_builer = InlineKeyboardBuilder()
 
         selected_date_string: str = manager.dialog_data["selected_date"]
         selected_date = datetime.datetime.strptime(selected_date_string, "%Y-%m-%d").date()
-        timeslots = self.timeslots
+        timeslots = self.timepoints
 
         # do not show past timeslots
         if selected_date == datetime.datetime.now().date():
-            timeslots = list(filter(lambda x: datetime.datetime.now().time() <= x, self.timeslots))
+            timeslots = list(filter(lambda x: datetime.datetime.now().time() <= x, self.timepoints))
 
-        for timeslot in timeslots:
-            time_text = timeslot.strftime("%H:%M")
+        none_callback_data = self._item_callback_data("None")
+        for timepoint in timeslots:
+            time_text = timepoint.strftime("%H:%M")
+            time_callback_data = self._item_callback_data(time_text)
 
-            if timeslot in interactive_timeslots:
-                if endpoint_timeslots and timeslot == endpoint_timeslots[0]:
+            available = timepoint in available_timepoints_to_select
+            "available for selection; does take into account only remaining daily hours"
+            blocked = timepoint in blocked_timepoints
+            "timepoints that are blocked by already booked timepoints"
+            already_selected = timepoint in endpoint_time_selected
+            booked_by_someone = timepoint in already_booked_timepoints
+
+            print(f"{timepoint=} {available=} {blocked=} {already_selected=} {booked_by_someone=}")
+            if already_selected:
+                if timepoint == endpoint_time_selected[0]:
                     text = f"{time_text} -"
-                elif endpoint_timeslots and timeslot == endpoint_timeslots[-1]:
+                elif timepoint == endpoint_time_selected[-1]:
                     text = f"- {time_text}"
                 else:
-                    text = time_text
-                button = InlineKeyboardButton(
-                    text=text,
-                    callback_data=self._item_callback_data(time_text),
-                )
-
-            else:
-                if timeslot in already_booked_timeslots:
-                    booking = already_booked_timeslots[timeslot]
-                    booked_by_alias = booking["participant_alias"]
-                    if booked_by_alias == manager.event.from_user.username:
-                        button = InlineKeyboardButton(text="🟢", callback_data=self._item_callback_data("None"))
-                    else:
-                        button = InlineKeyboardButton(text="🔴", url=f"https://t.me/{booked_by_alias}")
+                    assert_never(timepoint)
+                keyboard_builer.button(text=text, callback_data=time_callback_data)
+            elif available and not blocked:
+                keyboard_builer.button(text=time_text, callback_data=time_callback_data)
+            elif booked_by_someone:
+                booking = already_booked_timepoints[timepoint]
+                booked_by_alias = booking["participant_alias"]
+                if booked_by_alias == manager.event.from_user.username:
+                    keyboard_builer.button(text="🟢", callback_data=none_callback_data)
                 else:
-                    button = InlineKeyboardButton(text=" ", callback_data=self._item_callback_data("None"))
-
-            keyboard.append([button])
-        return keyboard
+                    keyboard_builer.button(text="🔴", url=f"https://t.me/{booked_by_alias}")
+            else:
+                keyboard_builer.button(
+                    text=" ",
+                    callback_data=self._item_callback_data("None"),
+                )
+        keyboard_builer.adjust(4, True)
+        return keyboard_builer.export()
 
     async def _process_item_callback(
         self,
@@ -145,52 +167,47 @@ class TimeRangeWidget(Keyboard):
         :return: True if processed
         """
         widget_data = self.get_widget_data(manager, [])
-        if len(widget_data) != 0 and data == widget_data[0][:5]:
-            return False
         if data == "None":
             if widget_data:
                 self.set_widget_data(manager, [])
                 return True
             return False
-        clicked_timeslot = datetime.time.fromisoformat(data)
+        clicked_timepoint = data
 
-        if clicked_timeslot in self.timeslots:
-            # add or remove timeslot
-            endpoint_timeslots = self.get_widget_data(manager, [])
-            if clicked_timeslot in endpoint_timeslots:
-                endpoint_timeslots.remove(clicked_timeslot)
-            else:
-                endpoint_timeslots.append(clicked_timeslot)
-            for i in range(len(endpoint_timeslots)):
-                if isinstance(endpoint_timeslots[i], (datetime.time,)):
-                    endpoint_timeslots[i] = endpoint_timeslots[i].isoformat()
-            self.set_widget_data(manager, endpoint_timeslots)
-            return True
-        return False
+        # add or remove timeslot
 
-    def get_endpoint_timeslots(self, manager: DialogManager) -> list[datetime.time]:
-        """
-        Get endpoint timeslots
-        :param manager: dialog manager
-        :return: list of timeslots
-        """
-        return self.get_widget_data(manager, [])
+        endpoint_timepoints = self.get_widget_data(manager, [])
+        if clicked_timepoint in endpoint_timepoints:
+            endpoint_timepoints.remove(clicked_timepoint)
+        else:
+            endpoint_timepoints.append(clicked_timepoint)
+        for i in range(len(endpoint_timepoints)):
+            if isinstance(endpoint_timepoints[i], (datetime.time,)):
+                endpoint_timepoints[i] = endpoint_timepoints[i].isoformat()
+        self.set_widget_data(manager, endpoint_timepoints)
+        return True
+
+    def get_selected_time_points(self, manager: DialogManager) -> list[datetime.time]:
+        endpoint_time_selected = self.get_widget_data(manager, [])
+        endpoint_time_selected = list(
+            map(
+                lambda x: datetime.datetime.strptime(x, "%H:%M").time(),
+                endpoint_time_selected,
+            )
+        )
+        return endpoint_time_selected
 
     def __init__(
         self,
-        timeslots: list[datetime.time] | Callable[..., list[datetime.time]],
+        timepoints: list[datetime.time] | Callable[..., list[datetime.time]],
         id: Optional[str] = None,
         when: WhenCondition = None,
     ):
         super().__init__(id=id, when=when)
-        self._timeslots = timeslots
+        self._timepoints = timepoints
 
     @property
-    def timeslots(self) -> list[datetime.time]:
-        """
-        Get timeslots
-        :return: list of timeslots
-        """
-        if callable(self._timeslots):
-            return self._timeslots()
-        return self._timeslots
+    def timepoints(self) -> list[datetime.time]:
+        if callable(self._timepoints):
+            return self._timepoints()
+        return self._timepoints

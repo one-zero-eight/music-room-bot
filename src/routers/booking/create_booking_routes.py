@@ -39,15 +39,12 @@ async def on_time_confirmed(callback: CallbackQuery, _button: Button, dialog_man
     date_string: str = dialog_manager.dialog_data["selected_date"]
     date: datetime.datetime = datetime.datetime.fromisoformat(date_string)
 
-    chosen_timeslots = time_selection_widget.get_endpoint_timeslots(dialog_manager)
+    chosen_timeslots = time_selection_widget.get_selected_time_points(dialog_manager)
 
     if len(chosen_timeslots) != 2:
         await callback.message.answer("You must choose both start and end time")
         return
     start, end = chosen_timeslots
-    start = datetime.datetime.strptime(start, "%H:%M:%S").time()
-    end = datetime.datetime.strptime(end, "%H:%M:%S").time()
-
     success, error = await client.book(callback.from_user.id, date, start, end)
 
     if success:
@@ -94,7 +91,7 @@ date_selection = Window(
 )
 
 time_selection_widget = TimeRangeWidget(
-    timeslots=generate_timeslots(datetime.time(7, 0), datetime.time(22, 30), 30),
+    timepoints=generate_timeslots(datetime.time(7, 0), datetime.time(22, 30), 30),
     id="time_selection",
 )
 
@@ -104,6 +101,8 @@ async def getter_for_time_selection(dialog_manager: DialogManager, event_from_us
     date: str = dialog_data["selected_date"]
     data: dict[str, Any] = {"selected_date": date}
     hours = await client.get_remaining_daily_hours(event_from_user.id, date)
+    weekly_hours = await client.get_remaining_weekly_hours(event_from_user.id, date)
+    hours = min(hours, weekly_hours)
     data["remaining_daily_hours"] = hours
     data["remaining_daily_hours_hours"] = int(hours)
     data["remaining_daily_hours_minutes"] = int((hours - data["remaining_daily_hours_hours"]) * 60)
