@@ -4,6 +4,7 @@ $defs:
     enum:
     - development
     - production
+    - staging
     title: Environment
     type: string
 properties:

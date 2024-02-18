@@ -8,6 +8,7 @@ from pydantic import BaseModel, SecretStr
 class Environment(str, Enum):
     DEVELOPMENT = "development"
     PRODUCTION = "production"
+    STAGING = "staging"
 
 
 class Settings(BaseModel):
