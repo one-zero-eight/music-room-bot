@@ -2,6 +2,7 @@ import asyncio
 import datetime
 
 from aiogram import F, Router, types
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.state import any_state
@@ -9,6 +10,7 @@ from aiogram.types import BufferedInputFile
 
 from src.api import client
 from src.filters import FilledProfileFilter
+from src.logging_ import logger
 
 router = Router()
 router.message.filter(FilledProfileFilter())
@@ -71,4 +73,7 @@ async def get_image_schedule_for_current_week(callback: types.CallbackQuery):
     else:
         await callback.message.answer("Sending image for the next week...")
     await callback.bot.send_photo(chat_id=chat_id, photo=photo)
-    await callback.message.delete()
+    try:
+        await callback.message.delete()
+    except TelegramBadRequest as e:
+        logger.error(str(e))
