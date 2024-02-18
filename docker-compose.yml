@@ -8,7 +8,8 @@ services:
     depends_on:
       - redis
     restart: always
-    env_file: .env
+    volumes:
+      - ./settings.yaml:/code/settings.yaml
     networks:
       - default
       - music-room
