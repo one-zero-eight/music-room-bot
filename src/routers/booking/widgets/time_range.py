@@ -132,7 +132,6 @@ class TimeRangeWidget(Keyboard):
             already_selected = timepoint in endpoint_time_selected
             booked_by_someone = timepoint in already_booked_timepoints
 
-            print(f"{timepoint=} {available=} {blocked=} {already_selected=} {booked_by_someone=}")
             if already_selected:
                 if timepoint == endpoint_time_selected[0]:
                     text = f"{time_text} -"

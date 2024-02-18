@@ -2,16 +2,12 @@ __all__ = ["client", "InNoHassleMusicRoomAPI", "ParticipantStatus"]
 
 import datetime
 import json
-import os
 from enum import StrEnum
 from typing import Any, Optional
 
 import aiohttp
-from dotenv import load_dotenv, find_dotenv
 
-load_dotenv(find_dotenv())
-
-_BOT_TOKEN = os.getenv("TOKEN")
+from src.config import settings
 
 
 class ParticipantStatus(StrEnum):
@@ -24,14 +20,14 @@ class ParticipantStatus(StrEnum):
 class InNoHassleMusicRoomAPI:
     api_root_path: str
 
-    def __init__(self, api_root_path: str):
-        self.api_root_path = api_root_path
+    def __init__(self, api_url: str):
+        self.api_root_path = api_url
 
     def _create_session(self) -> aiohttp.ClientSession:
         return aiohttp.ClientSession()
 
     def _auth_session(self, session: aiohttp.ClientSession, telegram_id: int) -> None:
-        session.headers.update({"Authorization": f"Bearer {telegram_id}:{_BOT_TOKEN}"})
+        session.headers.update({"Authorization": f"Bearer {telegram_id}:{settings.bot_token.get_secret_value()}"})
 
     async def start_registration(self, email: str) -> tuple[bool, Any]:
         async with self._create_session() as session:
@@ -215,6 +211,4 @@ class InNoHassleMusicRoomAPI:
                     return bytes_, filename
 
 
-load_dotenv(find_dotenv())
-
-client: InNoHassleMusicRoomAPI = InNoHassleMusicRoomAPI(os.getenv("API_ROOT_PATH"))
+client: InNoHassleMusicRoomAPI = InNoHassleMusicRoomAPI(settings.api_url)

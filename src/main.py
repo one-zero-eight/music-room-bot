@@ -1,19 +1,16 @@
 import asyncio
-import logging
-import os
-from typing import Any
 
-from aiogram import Bot, Dispatcher, F
+from aiogram import Bot, F
 from aiogram import types
-from aiogram.dispatcher.event.bases import UNHANDLED
 from aiogram.filters import Command, ExceptionTypeFilter, CommandStart
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
-from aiogram.types import ErrorEvent, Update, User
+from aiogram.types import ErrorEvent
 from aiogram_dialog import setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent
-from dotenv import find_dotenv, load_dotenv
 
+import src.logging_  # noqa: F401
+from src.config import settings
 from src.constants import (
     instructions_url,
     how_to_get_url,
@@ -23,34 +20,21 @@ from src.constants import (
     bot_short_description,
     bot_commands,
 )
+from src.dispatcher import CustomDispatcher
 from src.filters import RegisteredUserFilter, FilledProfileFilter
+from src.middlewares import LogAllEventsMiddleware
 
-load_dotenv(find_dotenv())
-
-
-class CustomDispatcher(Dispatcher):
-    async def _send_dunno_message(self, bot: Bot, chat_id: int):
-        await bot.send_message(
-            chat_id,
-            "⚡️ I don't understand you. Please, use /start command.",
-        )
-
-    async def _listen_update(self, update: Update, **kwargs) -> Any:
-        res = await super()._listen_update(update, **kwargs)
-        if res is UNHANDLED:
-            bot: Bot = kwargs.get("bot")
-            event_from_user: User = kwargs.get("event_from_user")
-            await self._send_dunno_message(bot, event_from_user.id)
-        return res
-
-
-bot = Bot(token=os.getenv("TOKEN"))
-REDIS_URL = os.getenv("REDIS_URL")
-if REDIS_URL:
-    storage = RedisStorage.from_url(REDIS_URL, key_builder=DefaultKeyBuilder(with_destiny=True))
-    dp = CustomDispatcher(storage=storage)
+bot = Bot(token=settings.bot_token.get_secret_value())
+if settings.redis_url:
+    storage = RedisStorage.from_url(
+        settings.redis_url.get_secret_value(), key_builder=DefaultKeyBuilder(with_destiny=True)
+    )
 else:
-    dp = CustomDispatcher(storage=MemoryStorage())
+    storage = MemoryStorage()
+dp = CustomDispatcher(storage=storage)
+log_all_events_middleware = LogAllEventsMiddleware()
+dp.message.middleware(log_all_events_middleware)
+dp.callback_query.middleware(log_all_events_middleware)
 
 
 @dp.error(ExceptionTypeFilter(UnknownIntent), F.update.callback_query.as_("callback_query"))
@@ -136,5 +120,4 @@ if __name__ == "__main__":
         os.environ["TZ"] = "Europe/Moscow"
         time.tzset()
 
-    logging.basicConfig(level=logging.INFO)
     asyncio.run(main())

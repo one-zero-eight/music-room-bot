@@ -1,0 +1,38 @@
+$schema: http://json-schema.org/draft-07/schema#
+$defs:
+  Environment:
+    enum:
+    - development
+    - production
+    title: Environment
+    type: string
+properties:
+  environment:
+    allOf:
+    - $ref: '#/$defs/Environment'
+    default: development
+  bot_token:
+    format: password
+    title: Bot Token
+    type: string
+    writeOnly: true
+  api_url:
+    title: Api Url
+    type: string
+  redis_url:
+    anyOf:
+    - format: password
+      type: string
+      writeOnly: true
+    - type: 'null'
+    default: null
+    title: Redis Url
+  $schema:
+    description: Path to the schema file
+    title: Schema
+    type: string
+required:
+- bot_token
+- api_url
+title: Settings
+type: object

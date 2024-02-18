@@ -13,6 +13,8 @@ aiogram-dialog = "^2.0.0"
 ruff = "^0.1.9"
 redis = "^5.0.1"
 python-dotenv = "^1.0.1"
+pyyaml = "^6.0.1"
+colorlog = "^6.8.2"
 
 [tool.ruff]
 line-length = 120
