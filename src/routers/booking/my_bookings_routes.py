@@ -15,7 +15,7 @@ from src.routers.booking.callback_data import MyBookingsCallbackData
 async def show_my_bookings(message: Message):
     bookings = await client.get_participant_bookings(message.from_user.id)
     # only future bookings
-    bookings = [entry for entry in bookings if datetime.now() < datetime.fromisoformat(entry["time_start"])]
+    bookings = [entry for entry in bookings if datetime.now() < datetime.fromisoformat(entry["time_end"])]
 
     if not bookings:
         await message.answer("You don't have active bookings.")
