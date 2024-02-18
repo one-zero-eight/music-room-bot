@@ -7,15 +7,6 @@ from aiogram_dialog.widgets.kbd.calendar_kbd import (
     get_today,
     empty_button,
     CalendarScopeView,
-    CallbackGenerator,
-    CalendarConfig,
-    DATE_TEXT,
-    TODAY_TEXT,
-    WEEK_DAY_TEXT,
-    DAYS_HEADER_TEXT,
-    ZOOM_OUT_TEXT,
-    NEXT_MONTH_TEXT,
-    PREV_MONTH_TEXT,
     CalendarScope,
     CalendarMonthView,
     CalendarYearsView,
@@ -31,43 +22,9 @@ from typing import (
 from aiogram.types import InlineKeyboardButton
 
 from aiogram_dialog.api.protocols import DialogManager
-from aiogram_dialog.widgets.text import Text
 
 
 class CustomCalendarDaysView(CalendarDaysView):
-    def __init__(
-        self,
-        callback_generator: CallbackGenerator,
-        config: CalendarConfig,
-        date_text: Text = DATE_TEXT,
-        today_text: Text = TODAY_TEXT,
-        weekday_text: Text = WEEK_DAY_TEXT,
-        header_text: Text = DAYS_HEADER_TEXT,
-        zoom_out_text: Text = ZOOM_OUT_TEXT,
-        next_month_text: Text = NEXT_MONTH_TEXT,
-        prev_month_text: Text = PREV_MONTH_TEXT,
-    ):
-        super().__init__(
-            callback_generator,
-            config,
-            date_text,
-            today_text,
-            weekday_text,
-            header_text,
-            zoom_out_text,
-            next_month_text,
-            prev_month_text,
-        )
-        self.config = config
-        self.zoom_out_text = zoom_out_text
-        self.next_month_text = next_month_text
-        self.prev_month_text = prev_month_text
-        self.callback_generator = callback_generator
-        self.date_text = date_text
-        self.today_text = today_text
-        self.weekday_text = weekday_text
-        self.header_text = header_text
-
     async def _render_days(
         self,
         config: CalendarUserConfig,

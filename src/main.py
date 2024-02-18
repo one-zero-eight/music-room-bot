@@ -10,6 +10,7 @@ from aiogram_dialog import setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent
 
 import src.logging_  # noqa: F401
+import src.timezone  # noqa: F401
 from src.config import settings
 from src.constants import (
     instructions_url,
@@ -112,12 +113,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    import sys
-    import os
-    import time
-
-    if sys.platform != "win32":  # unix only
-        os.environ["TZ"] = "Europe/Moscow"
-        time.tzset()
-
     asyncio.run(main())
