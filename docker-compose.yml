@@ -10,6 +10,8 @@ services:
     restart: always
     volumes:
       - ./settings.yaml:/code/settings.yaml
+    environment:
+      - TZ=Europe/Moscow
     networks:
       - default
       - music-room
