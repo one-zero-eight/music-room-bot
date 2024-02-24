@@ -1,0 +1,38 @@
+# This is a Docker Compose configuration for local use.
+# In production use docker-compose.prod.yaml
+
+# Run all services:
+# docker compose up --build --detach
+
+version: "3"
+
+services:
+  bot:
+    build: . # See Dockerfile for more details
+    depends_on:
+      - redis # Wait for the database to be ready before starting the application
+    restart: always
+    volumes:
+      - "./settings.yaml:/code/settings.yaml:ro" # Read-only settings file
+    environment:
+      - TZ=Europe/Moscow # Set the timezone for correct calendar image generation
+    networks:
+      - default
+      - music-room
+
+  redis:
+    build: ./redis # See ./redis/Dockerfile for more details
+    restart: always
+    volumes:
+      - "redis:/data"
+    ports:
+      - "6379:6379"
+
+volumes:
+  redis:
+
+networks:
+  # Connect to a 'music-room' network for integration with Music room API
+  music-room:
+    external: true
+    name: music-room
