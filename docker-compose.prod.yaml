@@ -8,10 +8,10 @@ version: "3"
 
 # Override the default settings for production
 services:
-  # bot:
-    # TODO: Pull the image from GitHub Container Registry instead of building locally
-    # image: "ghcr.io/one-zero-eight/innohassle-musicroombot:main"
-    # build: !reset null
+  bot:
+    # Pull the image from GitHub Container Registry instead of building locally
+    image: "ghcr.io/one-zero-eight/innohassle-musicroombot:main"
+    build: !reset null
 
   redis:
     ports: !reset [] # Do not expose any ports
