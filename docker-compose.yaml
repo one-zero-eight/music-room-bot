@@ -21,10 +21,14 @@ services:
       - music-room
 
   redis:
-    build: ./redis # See ./redis/Dockerfile for more details
+    # See more: https://hub.docker.com/_/redis
+    image: "redis:7.2.4-alpine"
     restart: always
+    # Use custom config
+    command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
-      - "redis:/data"
+      - "redis:/data:rw"
+      - "./deploy/redis.conf:/usr/local/etc/redis/redis.conf:ro"
     ports:
       - "6379:6379"
 
